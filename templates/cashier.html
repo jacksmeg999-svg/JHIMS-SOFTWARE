@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(135deg,#e3f2fd,#fce4ec);
+    font-family: "Segoe UI";
+}
+
+.card {
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    animation: fadeIn 0.6s ease;
+}
+
+.header {
+    font-size: 26px;
+    font-weight: bold;
+    color: #0a7b83;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #0a7b83;
+    box-shadow: 0 0 8px rgba(10,123,131,0.3);
+}
+
+.btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg,#0072ff,#00c6ff);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(45deg,#28a745,#20c997);
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+.badge-mortuary {
+    background:#ff9800;
+    color:white;
+    padding:4px 8px;
+    border-radius:6px;
+}
+
+.badge-lab {
+    background:#0072ff;
+    color:white;
+    padding:4px 8px;
+    border-radius:6px;
+}
+
+@keyframes fadeIn {
+from {opacity:0; transform:translateY(20px);}
+to {opacity:1; transform:translateY(0);}
+}
+</style>
+
+<div class="card" style="padding:20px;">
+
+<div style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="header">💳 Cashier Panel</div>
+    <button class="btn btn-secondary" onclick="location.reload()">🔄 Refresh</button>
+</div>
+
+<!-- LOAD -->
+
+<form method="get" style="margin-top:15px;">
+    <div style="display:flex;gap:10px;">
+        <input type="text" name="load_pid" placeholder="Load by Patient ID">
+        <input type="text" name="corpse_id" placeholder="Load by Corpse ID">
+        <button class="btn btn-primary">Load</button>
+    </div>
+</form>
+
+<hr>
+
+<!-- FORM -->
+
+<form method="post">
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">
+
+<div>
+<label>Patient ID</label>
+<input name="patient_id" value="{{ prefill['patient_id'] if prefill else '' }}">
+</div>
+
+<div>
+<label>Patient Name</label>
+<input name="patient_name" value="{{ prefill['patient_name'] if prefill else '' }}">
+</div>
+
+<div>
+<label>Service</label>
+<select name="service_received">
+<option value="">Select</option>
+<option value="Mortuary"
+{% if prefill and prefill['service_received']=='Mortuary' %}selected{% endif %}>
+Mortuary
+</option>
+<option value="INVESTIGATION"
+{% if prefill and prefill['service_received']=='INVESTIGATION' %}selected{% endif %}>
+Lab Investigation
+</option>
+</select>
+</div>
+
+<div>
+<label>Amount (GHS)</label>
+<input type="number" name="amount_paid" value="{{ prefill['amount_paid'] if prefill else '' }}">
+</div>
+
+<div>
+<label>Payment Method</label>
+<select name="payment_method">
+<option>Cash</option>
+<option>Mobile Money</option>
+<option>Card</option>
+<option>Bank Transfer</option>
+</select>
+</div>
+
+</div>
+
+<div style="margin-top:10px;">
+<label>Details</label>
+<textarea name="details">{{ prefill['details'] if prefill else '' }}</textarea>
+</div>
+
+<div style="margin-top:15px;display:flex;gap:10px;">
+<button class="btn btn-success">💾 Save & Print</button>
+<button class="btn btn-secondary" type="reset">Clear</button>
+</div>
+
+</form>
+
+</div>
+
+<!-- RECEIPTS -->
+
+<div class="card" style="padding:20px;margin-top:20px;">
+
+<h3>📄 Recent Receipts</h3>
+
+<table style="width:100%;margin-top:10px;">
+<tr style="background:#f1f1f1;">
+<th>ID</th>
+<th>Patient</th>
+<th>Service</th>
+<th>Amount</th>
+<th>Action</th>
+</tr>
+
+{% for r in rows %}
+
+<tr>
+
+<td>{{ r.id }}</td>
+<td>{{ r.patient_name }}</td>
+
+<td>
+{% if r.service_received == "Mortuary" %}
+<span class="badge-mortuary">Mortuary</span>
+{% else %}
+<span class="badge-lab">Lab</span>
+{% endif %}
+</td>
+
+<td><strong>GHS {{ r.amount_paid }}</strong></td>
+
+<td>
+<a href="{{ url_for('receipt_view', rec_id=r.id) }}" target="_blank">
+<button class="btn btn-primary">Print</button>
+</a>
+</td>
+
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+{% endblock %}

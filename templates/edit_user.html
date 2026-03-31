@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:480px;">
+  <h2>Edit User {{ user.username }}</h2>
+  <form method="post">
+    <div><label>New password (leave blank to keep)</label><input type="password" name="password"></div>
+    <div>
+      <label>Role</label>
+      <select name="role">
+        <option {% if user.role=='Admin' %}selected{% endif %}>Admin</option>
+        <option {% if user.role=='Cashier' %}selected{% endif %}>Cashier</option>
+        <option {% if user.role=='Lab' %}selected{% endif %}>Lab</option>
+        <option {% if user.role=='Mortuary' %}selected{% endif %}>Mortuary</option>
+        <option {% if user.role=='Reports' %}selected{% endif %}>Reports</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit" style="margin-top:8px;">Save</button>
+  </form>
+</div>
+{% endblock %}

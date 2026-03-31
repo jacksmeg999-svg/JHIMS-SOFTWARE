@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<script>
+function addResultRow(sectionId){
+  const tbody = document.getElementById(sectionId);
+  const row = document.createElement('tr');
+  row.innerHTML = '<td><input type="text" class="r-test"></td>' +
+                  '<td><input type="text" class="r-value"></td>' +
+                  '<td><input type="text" class="r-unit"></td>' +
+                  '<td><input type="text" class="r-range"></td>';
+  tbody.appendChild(row);
+}
+function beforeSubmit(){
+  const sections = ['res_main','res_extra'];
+  let all = [];
+  sections.forEach(function(sec){
+    const tbody = document.getElementById(sec);
+    tbody.querySelectorAll('tr').forEach(function(tr){
+      const t = tr.querySelector('.r-test').value.trim();
+      const v = tr.querySelector('.r-value').value.trim();
+      const u = tr.querySelector('.r-unit').value.trim();
+      const r = tr.querySelector('.r-range').value.trim();
+      if(t || v || u || r){
+        all.push({section:sec,test:t,value:v,unit:u,ref:r});
+      }
+    });
+  });
+  document.getElementById('results_json').value = JSON.stringify(all);
+  return true;
+}
+window.addEventListener('DOMContentLoaded', function(){
+  const existing = {{ results|tojson }};
+  existing.forEach(function(row){
+    const sec = row.section || 'res_main';
+    addResultRow(sec);
+    const tbody = document.getElementById(sec);
+    const tr = tbody.lastElementChild;
+    tr.querySelector('.r-test').value = row.test || '';
+    tr.querySelector('.r-value').value = row.value || '';
+    tr.querySelector('.r-unit').value = row.unit || '';
+    tr.querySelector('.r-range').value = row.ref || '';
+  });
+  if(existing.length === 0){
+    addResultRow('res_main');
+  }
+});
+</script>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Lab Results - Invoice {{ req.invoice_no }}</h2>
+  <p>Patient: {{ req.patient_name }} (ID: {{ req.patient_id }}) | Age: {{ req.age }}</p>
+  <p>Created: {{ req.created_at }} | Results at: {{ req.results_at or 'Not yet' }}</p>
+  <form method="post" class="no-print" onsubmit="return beforeSubmit()">
+    <h3>Test Results (Main)</h3>
+    <table>
+      <thead><tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th></tr></thead>
+      <tbody id="res_main"></tbody>
+    </table>
+    <button class="btn btn-secondary" type="button" onclick="addResultRow('res_main')" style="margin-top:4px;">Add Row</button>
+
+    <h3 style="margin-top:12px;">Additional Results</h3>
+    <table>
+      <thead><tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th></tr></thead>
+      <tbody id="res_extra"></tbody>
+    </table>
+    <button class="btn btn-secondary" type="button" onclick="addResultRow('res_extra')" style="margin-top:4px;">Add Row</button>
+
+    <input type="hidden" id="results_json" name="results_json">
+    <div style="margin-top:8px;">
+      <button class="btn btn-primary" type="submit">Save Results</button>
+      <button class="btn btn-secondary" type="button" onclick="window.print()">Print</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

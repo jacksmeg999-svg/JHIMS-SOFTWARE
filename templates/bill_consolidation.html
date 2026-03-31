@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Bill Consolidation</h2>
+  <form method="post" class="no-print" style="margin-bottom:10px;">
+    <div class="row">
+      <div class="col">
+        <label>Patient ID</label>
+        <input type="text" name="patient_id" value="{{ patient_id or '' }}" required>
+      </div>
+      <div>
+        <label>&nbsp;</label><br>
+        <button class="btn btn-primary" type="submit">Show Bills</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if patient_id %}
+<div class="card">
+  <h3>Summary for Patient ID: {{ patient_id }}</h3>
+  <table>
+    <tbody>
+      <tr><td>Receipts total</td><td>GHS {{ '%.2f'|format(total_receipts or 0) }}</td></tr>
+      <tr><td>Lab invoices total</td><td>GHS {{ '%.2f'|format(total_labs or 0) }}</td></tr>
+      <tr><td>Mortuary bills total</td><td>GHS {{ '%.2f'|format(total_morts or 0) }}</td></tr>
+      <tr><td><strong>Grand total</strong></td><td><strong>GHS {{ '%.2f'|format(grand or 0) }}</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Receipts</h3>
+  {% if receipts %}
+  <table>
+    <thead><tr><th>Date</th><th>Receipt</th><th>Service</th><th>Amount</th></tr></thead>
+    <tbody>
+      {% for r in receipts %}
+      <tr>
+        <td>{{ r.date }}</td>
+        <td>{{ r.receipt_number }}</td>
+        <td>{{ r.service_received }}</td>
+        <td>{{ '%.2f'|format(r.amount_paid or 0) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No receipts yet.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>Lab Invoices</h3>
+  {% if labs %}
+  <table>
+    <thead><tr><th>Date</th><th>Invoice</th><th>Patient</th><th>Total</th><th>Paid?</th></tr></thead>
+    <tbody>
+      {% for r in labs %}
+      <tr>
+        <td>{{ r.created_at }}</td>
+        <td>{{ r.invoice_no }}</td>
+        <td>{{ r.patient_name }}</td>
+        <td>{{ '%.2f'|format(r.total_amount or 0) }}</td>
+        <td>{{ 'Yes' if r.is_paid else 'No' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No lab invoices yet.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>Mortuary Cases</h3>
+  {% if morts %}
+  <table>
+    <thead><tr><th>Corpse ID</th><th>Name</th><th>Deposit</th><th>Release</th><th>Days</th><th>Total</th><th>Paid?</th></tr></thead>
+    <tbody>
+      {% for c in morts %}
+      <tr>
+        <td>{{ c.corpse_id }}</td>
+        <td>{{ c.corpse_name }}</td>
+        <td>{{ c.deposit_date }}</td>
+        <td>{{ c.release_date }}</td>
+        <td>{{ c.days_total }}</td>
+        <td>{{ '%.2f'|format(c.total_amount or 0) }}</td>
+        <td>{{ 'Yes' if c.is_paid else 'No' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No mortuary bills yet.</p>{% endif %}
+  <div class="no-print" style="margin-top:8px;">
+    <button class="btn btn-primary" type="button" onclick="window.print()">Print Consolidated Bill</button>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

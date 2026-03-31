@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h2 style="margin:0;">LAB INVOICE</h2>
+      <div>{{ HOSPITAL_NAME }}</div>
+      <div style="font-size:11px;">{{ HOSPITAL_ADDRESS }}</div>
+    </div>
+    <div><img src="{{ url_for('static', filename='ghs_logo.png') }}" alt="GHS" style="height:60px;" onerror="this.style.display='none'"></div>
+  </div>
+  <hr>
+  <p>Date: {{ req.created_at }} &nbsp; Invoice: <strong>{{ req.invoice_no }}</strong></p>
+  <p>Patient ID: {{ req.patient_id }} | Patient: <strong>{{ req.patient_name }}</strong> | Age: {{ req.age }}</p>
+  <p>Insurance: {{ req.insured_status }}</p>
+  <table>
+    <thead><tr><th>#</th><th>Test</th><th>Price</th></tr></thead>
+    <tbody>
+      {% set i = 1 %}
+      {% for t in tests %}
+      <tr><td>{{ i }}</td><td>{{ t.name }}</td><td>{{ '%.2f'|format(t.price) }}</td></tr>
+      {% set i = i + 1 %}
+      {% endfor %}
+      <tr><td colspan="2"><strong>Total</strong></td><td><strong>GHS {{ '%.2f'|format(req.total_amount or 0) }}</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="footer-text">{{ POWERED_BY }}</div>
+  <div class="no-print" style="margin-top:8px;"><button class="btn btn-primary" onclick="window.print()">Print</button></div>
+</div>
+{% endblock %}

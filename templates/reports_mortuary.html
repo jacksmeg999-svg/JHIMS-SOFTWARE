@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Mortuary Report</h2>
+  <form method="post" class="no-print">
+    <div class="row">
+      <div class="col"><label>Start deposit date</label><input type="date" name="start" value="{{ start }}"></div>
+      <div class="col"><label>End deposit date</label><input type="date" name="end" value="{{ end }}"></div>
+    </div>
+    <button class="btn btn-primary" type="submit" style="margin-top:6px;">Show</button>
+  </form>
+</div>
+{% if rows %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h3 style="margin:0;">Mortuary Bills ({{ start }} to {{ end }})</h3>
+      <div style="font-size:11px;">{{ HOSPITAL_NAME }} - {{ HOSPITAL_ADDRESS }}</div>
+    </div>
+    <div><img src="{{ url_for('static', filename='ghs_logo.png') }}" alt="GHS" style="height:50px;" onerror="this.style.display='none'"></div>
+  </div>
+  <table>
+    <thead><tr><th>Corpse ID</th><th>Patient ID</th><th>Name</th><th>Deposit</th><th>Release</th><th>Days</th><th>Total</th><th>Paid?</th></tr></thead>
+    <tbody>
+      {% for c in rows %}
+      <tr>
+        <td>{{ c.corpse_id }}</td><td>{{ c.patient_id }}</td><td>{{ c.corpse_name }}</td>
+        <td>{{ c.deposit_date }}</td><td>{{ c.release_date }}</td>
+        <td>{{ c.days_total }}</td><td>{{ '%.2f'|format(c.total_amount or 0) }}</td>
+        <td>{{ 'Yes' if c.is_paid else 'No' }}</td>
+      </tr>
+      {% endfor %}
+      <tr><td colspan="6"><strong>Total</strong></td><td colspan="2"><strong>{{ '%.2f'|format(total or 0) }}</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="footer-text">{{ POWERED_BY }}</div>
+  <div class="no-print" style="margin-top:8px;"><button class="btn btn-primary" onclick="window.print()">Print</button></div>
+</div>
+{% endif %}
+{% endblock %}

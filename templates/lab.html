@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<script>
+  function toggleTest(cb, ins, nonIns){
+    const insured = document.querySelector('input[name="insured_status"]:checked').value === 'Insured';
+    const price = insured ? ins : nonIns;
+    const testsInput = document.getElementById('tests_json');
+    let tests=[];
+    try{ tests = JSON.parse(testsInput.value || "[]"); }catch(e){ tests=[]; }
+    if(cb.checked){
+      tests.push({name: cb.dataset.name, price: price});
+    }else{
+      tests = tests.filter(t=>t.name !== cb.dataset.name);
+    }
+    testsInput.value = JSON.stringify(tests);
+    let total = 0; tests.forEach(t=> total += t.price);
+    document.getElementById('total_amount').value = total.toFixed(2);
+    document.getElementById('total_label').textContent = "Total: GHS " + total.toFixed(2);
+  }
+  function refreshPrices(){
+    const insured = document.querySelector('input[name="insured_status"]:checked').value === 'Insured';
+    document.querySelectorAll('tr[data-ins][data-non]').forEach(function(row){
+      const ins = parseFloat(row.dataset.ins);
+      const nonIns = parseFloat(row.dataset.non);
+      row.querySelector('.price').textContent = (insured?ins:nonIns).toFixed(2);
+    });
+    const testsInput = document.getElementById('tests_json');
+    let tests=[];
+    try{ tests = JSON.parse(testsInput.value || "[]"); }catch(e){ tests=[]; }
+    tests.forEach(function(t){
+      const cb = document.querySelector('input[data-name="'+t.name+'"]');
+      if(cb){
+        const ins = parseFloat(cb.dataset.ins);
+        const nonIns = parseFloat(cb.dataset.non);
+        t.price = insured?ins:nonIns;
+      }
+    });
+    testsInput.value = JSON.stringify(tests);
+    let total=0; tests.forEach(t=> total+=t.price);
+    document.getElementById('total_amount').value = total.toFixed(2);
+    document.getElementById('total_label').textContent = "Total: GHS " + total.toFixed(2);
+  }
+</script>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">Laboratory - Requests</h2>
+    <div class="no-print" style="font-size:12px;text-align:right;">
+      <div>Today ({{ today }}): <strong>{{ today_count }}</strong> requests</div>
+      <div>Total amount: <strong>GHS {{ '%.2f'|format(today_total or 0) }}</strong></div>
+    </div>
+  </div>
+  <form method="post" class="no-print" style="margin-top:8px;">
+    <div class="row">
+      <div class="col"><label>Patient ID</label><input type="text" name="patient_id"></div>
+      <div class="col"><label>Patient Name</label><input type="text" name="patient_name" required></div>
+      <div class="col"><label>Age</label><input type="text" name="age"></div>
+    </div>
+    <div style="margin:6px 0;">
+      <label>Insurance</label>
+      <label><input type="radio" name="insured_status" value="Insured" onchange="refreshPrices()"> Insured</label>
+      <label style="margin-left:8px;"><input type="radio" name="insured_status" value="Non-insured" checked onchange="refreshPrices()"> Non-insured</label>
+    </div>
+    <div style="max-height:230px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;">
+      <table>
+        <thead><tr><th></th><th>Test</th><th>Current Price</th><th>Insured</th><th>Non-insured</th></tr></thead>
+        <tbody>
+          {% for t in LAB_TESTS %}
+          <tr data-ins="{{ t.insured_price }}" data-non="{{ t.non_insured_price }}">
+            <td><input type="checkbox" data-name="{{ t.name }}" data-ins="{{ t.insured_price }}" data-non="{{ t.non_insured_price }}" onchange="toggleTest(this, {{ t.insured_price }}, {{ t.non_insured_price }})"></td>
+            <td>{{ t.name }}</td>
+            <td class="price">{{ '%.2f'|format(t.non_insured_price) }}</td>
+            <td>{{ '%.2f'|format(t.insured_price) }}</td>
+            <td>{{ '%.2f'|format(t.non_insured_price) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <input type="hidden" id="tests_json" name="tests_json" value="[]">
+    <input type="hidden" id="total_amount" name="total_amount" value="0">
+    <p id="total_label"><strong>Total: GHS 0.00</strong></p>
+    <div style="margin-top:6px;">
+      <button class="btn btn-primary" type="submit">Save &amp; Print Invoice</button>
+      <button class="btn btn-secondary" type="reset">Clear form</button>
+      <button class="btn btn-secondary" type="button" onclick="location.reload()">Refresh</button>
+    </div>
+  </form>
+</div>
+
+<div class="card no-print">
+  <h3>Find Existing Lab Requests</h3>
+  <form method="get" style="margin-bottom:6px;">
+    <div class="row">
+      <div class="col"><label>Search by name / Patient ID / Invoice</label><input type="text" name="q" value="{{ q or '' }}"></div>
+      <div><label>&nbsp;</label><br><button class="btn btn-secondary" type="submit">Search</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="card no-print">
+  <h3>Recent Lab Requests</h3>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Date</th><th>Invoice</th><th>Patient ID</th><th>Patient</th><th>Insured</th><th>Total</th><th>Paid?</th><th>Results</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.created_at }}</td>
+        <td><a href="{{ url_for('lab_invoice', req_id=r.id) }}" target="_blank">{{ r.invoice_no }}</a></td>
+        <td>{{ r.patient_id }}</td>
+        <td>{{ r.patient_name }}</td>
+        <td>{{ r.insured_status }}</td>
+        <td>{{ '%.2f'|format(r.total_amount or 0) }}</td>
+        <td>{{ 'Yes' if r.is_paid else 'No' }}</td>
+        <td><a class="btn btn-secondary" href="{{ url_for('lab_results', req_id=r.id) }}">Results</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card no-print">
+  <h3>Verify Payment</h3>
+  <form method="post" action="{{ url_for('lab_verify_payment') }}">
+    <div class="row">
+      <div class="col"><label>Patient ID</label><input type="text" name="patient_id_verify" required></div>
+      <div><label>&nbsp;</label><br><button class="btn btn-secondary" type="submit">Check</button></div>
+    </div>
+  </form>
+</div>
+{% endblock %}

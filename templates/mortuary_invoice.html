@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h2 style="margin:0;">MORTUARY INVOICE</h2>
+      <div>{{ HOSPITAL_NAME }}</div>
+      <div style="font-size:11px;">{{ HOSPITAL_ADDRESS }}</div>
+    </div>
+    <div><img src="{{ url_for('static', filename='ghs_logo.png') }}" alt="GHS" style="height:60px;" onerror="this.style.display='none'"></div>
+  </div>
+  <hr>
+  <p>Corpse ID: <strong>{{ case.corpse_id }}</strong> | Patient ID: {{ case.patient_id }}</p>
+  <p>Name: {{ case.corpse_name }} | Sex: {{ case.sex }} | Age: {{ case.age }}</p>
+  <p>Relative: {{ case.relative_name }} ({{ case.relative_phone }})</p>
+  <p>Deposit: {{ case.deposit_date }} | Release: {{ case.release_date or 'Not released' }}</p>
+  <table>
+    <tbody>
+      <tr><td>Days in mortuary</td><td>{{ case.days_total }}</td></tr>
+      <tr><td>Daily rate</td><td>GHS {{ '%.2f'|format(case.daily_rate or 0) }}</td></tr>
+      <tr><td>Embalming fee</td><td>GHS {{ '%.2f'|format(case.embalming_fee or 0) }}</td></tr>
+      <tr><td>Extra ({{ case.extra_items or 'None' }})</td><td>GHS {{ '%.2f'|format(case.extra_amount or 0) }}</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>GHS {{ '%.2f'|format(case.total_amount or 0) }}</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="footer-text">{{ POWERED_BY }}</div>
+  <div class="no-print" style="margin-top:8px;"><button class="btn btn-primary" onclick="window.print()">Print</button></div>
+</div>
+{% endblock %}
+
+<h2>Mortuary Invoice</h2>
+
+<p>ID: {{ r.corpse_id }}</p>
+<p>Name: {{ r.corpse_name }}</p>
+<p>Days: {{ r.days_total }}</p>
+<p>Total: GH₵ {{ r.total_amount }}</p>
+<p>Status: {{ r.payment_status }}</p>
+
+<button onclick="window.print()">Print</button>
+

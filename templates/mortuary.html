@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(135deg,#e0f7fa,#fce4ec);
+    font-family: "Segoe UI";
+}
+
+.header {font-size:26px;font-weight:bold;margin-bottom:20px;}
+
+.dashboard {display:flex;gap:20px;margin-bottom:25px;}
+
+.card-btn {
+    flex:1;padding:25px;border-radius:18px;color:white;
+    text-align:center;cursor:pointer;font-weight:bold;
+    transition:0.3s;
+}
+.card-btn:hover {transform:translateY(-6px) scale(1.05);}
+
+.register {background:linear-gradient(45deg,#00c6ff,#0072ff);}
+.discharge {background:linear-gradient(45deg,#ff9800,#ffc107);}
+.records {background:linear-gradient(45deg,#28a745,#20c997);}
+
+.section {
+    display:none;background:white;padding:25px;border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+    animation:fadeIn 0.4s ease;
+}
+.active {display:block;}
+
+.title {background:#ffe082;padding:10px;font-weight:bold;text-align:center;margin-bottom:15px;}
+.section-title {font-weight:bold;margin-top:15px;}
+
+input, select {
+    width:100%;padding:10px;margin-bottom:10px;
+    border-radius:8px;border:1px solid #ccc;
+}
+
+.btn {padding:10px;border-radius:8px;border:none;color:white;cursor:pointer;}
+.btn-primary {background:#0072ff;}
+.btn-warning {background:#ff9800;}
+.btn-success {background:#28a745;}
+.btn-danger {background:#ff4b2b;}
+
+table {width:100%;border-collapse:collapse;}
+th, td {padding:10px;border-bottom:1px solid #ddd;text-align:center;}
+
+.invoice-box {
+    margin-top:20px;
+    padding:20px;
+    background:#ffffff;
+    border-radius:12px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.1);
+    animation:fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+from {opacity:0; transform:translateY(20px);}
+to {opacity:1; transform:translateY(0);}
+}
+</style>
+
+<div class="header">⚰️ Mortuary Dashboard</div>
+
+<div class="dashboard">
+<div class="card-btn register" onclick="show('register')">Register Body</div>
+<div class="card-btn discharge" onclick="show('discharge')">Discharge</div>
+<div class="card-btn records" onclick="show('records')">Records</div>
+</div>
+
+<!-- ================= REGISTER ================= -->
+
+<div id="register" class="section active">
+
+<div class="title">Death Certificate Form</div>
+
+<form method="post">
+<input name="patient_id" placeholder="Patient ID (optional)">
+<input name="corpse_name" placeholder="Full Name" required>
+<input name="age" placeholder="Age">
+
+<select name="sex">
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+
+<input name="relative_name" placeholder="Relative Name">
+<input name="relative_phone" placeholder="Phone">
+<input type="date" name="deposit_date">
+
+<button type="submit" class="btn btn-primary">Save Record</button>
+
+</form>
+
+</div>
+
+<!-- ================= DISCHARGE ================= -->
+
+<div id="discharge" class="section">
+
+<h3>Discharge Body</h3>
+
+<form method="POST" action="{{ url_for('generate_mortuary_bill') }}">
+
+<input type="text" name="corpse_id" placeholder="Enter Corpse ID" required>
+
+<input type="number" name="extra_amount" placeholder="Extra Amount (optional)">
+
+<button type="submit" class="btn btn-warning">Generate Bill</button>
+
+</form>
+
+<!-- ✅ INVOICE DISPLAY -->
+
+{% if show_bill %}
+
+<div class="invoice-box">
+
+<h3 style="color:#0a7b83;">🧾 Mortuary Invoice</h3>
+
+<p><strong>Name:</strong> {{ case.corpse_name }}</p>
+<p><strong>Corpse ID:</strong> {{ case.corpse_id }}</p>
+
+<hr>
+
+<p><strong>Days Stayed:</strong> {{ days }}</p>
+<p><strong>Storage Bill:</strong> GHS {{ storage_bill }}</p>
+<p><strong>Embalming Fee:</strong> GHS {{ embalming_fee }}</p>
+<p><strong>Extra Charges:</strong> GHS {{ extra }}</p>
+
+<hr>
+
+<h2 style="color:#0a7b83;">Total: GHS {{ total }}</h2>
+
+<br>
+
+<a href="/cashier?corpse_id={{ case.corpse_id }}">
+<button class="btn btn-success">Send to Cashier</button>
+</a>
+
+</div>
+
+{% endif %}
+
+</div>
+
+<!-- ================= RECORDS ================= -->
+
+<div id="records" class="section">
+
+<h3>Records</h3>
+
+<table>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Status</th>
+<th>Payment</th>
+<th>Days</th>
+<th>Live Bill</th>
+<th>Action</th>
+</tr>
+
+{% for c in rows %}
+
+<tr>
+
+<td>{{ c.corpse_id }}</td>
+<td>{{ c.corpse_name }}</td>
+<td>{{ c.status }}</td>
+
+<td>
+{% if c.is_paid == 1 %}
+<span style="color:green;font-weight:bold;">✔ PAID</span>
+{% else %}
+<span style="color:red;font-weight:bold;">❌ NOT PAID</span>
+{% endif %}
+</td>
+
+<td>{{ c.live_days }}</td>
+
+<td style="color:#00c853;font-weight:bold;">
+GHS {{ c.live_bill }}
+</td>
+
+<td>
+
+<a href="/mortuary/view/{{ c.id }}">
+<button class="btn btn-primary">View</button>
+</a>
+
+<a href="/mortuary/discharge/{{ c.id }}">
+<button class="btn btn-warning">Bill</button>
+</a>
+
+<a href="/mortuary/invoice/{{ c.id }}">
+<button class="btn btn-success">Invoice</button>
+</a>
+
+<a href="/mortuary/delete/{{ c.id }}">
+<button class="btn btn-danger">Delete</button>
+</a>
+
+<a href="/cashier?load_pid={{ c.patient_id }}">
+<button class="btn btn-success">Cashier</button>
+</a>
+
+</td>
+
+</tr>
+{% endfor %}
+</table>
+
+</div>
+
+<script>
+function show(id){
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+</script>
+
+{% endblock %}

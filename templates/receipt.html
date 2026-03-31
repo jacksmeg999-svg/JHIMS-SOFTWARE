@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+    <div>
+      <h2 style="margin:0;">OFFICIAL RECEIPT</h2>
+      <div>{{ HOSPITAL_NAME }}</div>
+      <div style="font-size:11px;">{{ HOSPITAL_ADDRESS }}</div>
+    </div>
+    <div style="text-align:right;">
+      <img src="{{ url_for('static', filename='ghs_logo.png') }}" alt="GHS" style="height:50px;margin-bottom:4px;" onerror="this.style.display='none'"><br>
+      {% if qr_code %}
+      <div style="font-size:10px;margin-bottom:2px;">Scan to verify</div>
+      <img src="data:image/png;base64,{{ qr_code }}" alt="QR" style="height:70px;">
+      {% endif %}
+    </div>
+  </div>
+  <hr>
+  <table style="width:100%;font-size:13px;">
+    <tr><td>Date</td><td>{{ rec.date }}</td></tr>
+    <tr><td>Receipt No.</td><td><strong>{{ rec.receipt_number }}</strong></td></tr>
+    <tr><td>Patient ID</td><td>{{ rec.patient_id }}</td></tr>
+    <tr><td>Patient Name</td><td>{{ rec.patient_name }}</td></tr>
+    <tr><td>Service</td><td>{{ rec.service_received }}</td></tr>
+    <tr><td>Amount (GHS)</td><td><strong>{{ '%.2f'|format(rec.amount_paid or 0) }}</strong></td></tr>
+    <tr><td>In words</td><td><em>{{ rec.amount_in_words }}</em></td></tr>
+    <tr><td>Payment Method</td><td>{{ rec.payment_method }}</td></tr>
+    <tr><td>Cashier</td><td>{{ rec.cashier_name }}</td></tr>
+  </table>
+  {% if rec.details %}
+  <p style="margin-top:8px;font-size:12px;"><strong>Details:</strong><br>{{ rec.details }}</p>
+  {% endif %}
+  <div class="footer-text">
+    {{ POWERED_BY }}
+  </div>
+  <div class="no-print" style="margin-top:8px;">
+    <button class="btn btn-primary" onclick="window.print()">Print</button>
+  </div>
+</div>
+{% endblock %}

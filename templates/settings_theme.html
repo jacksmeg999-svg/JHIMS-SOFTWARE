@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:480px;">
+  <h2>Theme &amp; Colours</h2>
+  <form method="post">
+    <div>
+      <label>Select theme</label>
+      <select name="theme">
+        <option value="light" {% if current=='light' %}selected{% endif %}>Light clean (default)</option>
+        <option value="luxury" {% if current=='luxury' %}selected{% endif %}>Luxury dark</option>
+      </select>
+    </div>
+    <p style="font-size:12px;margin-top:6px;">
+      Light theme is best for daytime and printing. Luxury dark uses a rich, neon dashboard style.
+    </p>
+    <button class="btn btn-primary" type="submit" style="margin-top:8px;">Save Theme</button>
+  </form>
+</div>
+{% endblock %}

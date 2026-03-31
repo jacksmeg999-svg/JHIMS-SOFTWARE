@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Receipt Settings</h2>
+  <form method="post">
+    <div class="row">
+      <div class="col"><label>Receipt prefix</label><input type="text" name="prefix" value="{{ prefix }}"></div>
+      <div class="col"><label>Last receipt number</label><input type="text" name="last" value="{{ last }}"></div>
+    </div>
+    <p style="font-size:11px;color:#64748b;">Example: DMH/0000001. Next receipt continues from this.</p>
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+  <p style="margin-top:10px;">Other settings:</p>
+  <ul>
+    <li><a href="{{ url_for('settings_theme') }}">Theme & colours</a></li>
+    <li><a href="{{ url_for('settings_lab_prices') }}">Lab prices</a></li>
+    <li><a href="{{ url_for('settings_services') }}">Service list</a></li>
+    <li><a href="{{ url_for('admin_backup') }}">One-click DB backup (download)</a></li>
+  </ul>
+</div>
+{% endblock %}

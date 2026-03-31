@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Service List</h2>
+  <form method="post" class="no-print" style="margin-bottom:8px;">
+    <input type="hidden" name="action" value="add">
+    <div class="row">
+      <div class="col"><label>New Service Name</label><input type="text" name="name" required></div>
+      <div><label>&nbsp;</label><br><button class="btn btn-primary" type="submit">Add</button></div>
+    </div>
+  </form>
+  <table>
+    <thead><tr><th>ID</th><th>Name</th><th></th></tr></thead>
+    <tbody>
+      {% for s in rows %}
+      <tr>
+        <td>{{ s.id }}</td><td>{{ s.name }}</td>
+        <td>
+          <form method="post" class="no-print" style="display:inline;">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="service_id" value="{{ s.id }}">
+            <button class="btn btn-danger" type="submit" onclick="return confirm('Delete service?')">Del</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<h2>Generate Bill</h2>
+
+<p>Name: {{ r.corpse_name }}</p>
+<p>Corpse ID: {{ r.corpse_id }}</p>
+
+<form method="post" action="/mortuary/discharge_by_id">
+
+<input name="corpse_id" value="{{ r.corpse_id }}" readonly>
+
+<div id="items"></div>
+
+<button type="button" onclick="addItem()">Add Charge</button>
+
+<button type="submit">Generate Bill</button>
+
+</form>
+
+<script>
+function addItem(){
+let div=document.createElement("div");
+div.innerHTML=`
+<input name="item_price[]" placeholder="Price">
+<button onclick="this.parentElement.remove()">X</button>
+`;
+document.getElementById("items").appendChild(div);
+}
+</script>

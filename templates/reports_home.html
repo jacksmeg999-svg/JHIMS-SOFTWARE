@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Reports</h2>
+  <ul>
+    <li><a href="{{ url_for('reports_patient') }}">Patient receipts (date range)</a></li>
+    <li><a href="{{ url_for('reports_services') }}">Services summary (date range)</a></li>
+    <li><a href="{{ url_for('reports_mortuary') }}">Mortuary bills (date range)</a></li>
+  </ul>
+</div>
+{% endblock %}

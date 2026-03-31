@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Service Summary Report</h2>
+  <form method="post" class="no-print">
+    <div class="row">
+      <div class="col"><label>Start date</label><input type="date" name="start" value="{{ start }}"></div>
+      <div class="col"><label>End date</label><input type="date" name="end" value="{{ end }}"></div>
+    </div>
+    <button class="btn btn-primary" type="submit" style="margin-top:6px;">Show</button>
+  </form>
+</div>
+{% if rows %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h3 style="margin:0;">Service Summary ({{ start }} to {{ end }})</h3>
+      <div style="font-size:11px;">{{ HOSPITAL_NAME }} - {{ HOSPITAL_ADDRESS }}</div>
+    </div>
+    <div><img src="{{ url_for('static', filename='ghs_logo.png') }}" alt="GHS" style="height:50px;" onerror="this.style.display='none'"></div>
+  </div>
+  <table>
+    <thead><tr><th>Service</th><th>Count</th><th>Total Amount</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td>{{ r.service_received }}</td><td>{{ r.count_rec }}</td><td>{{ '%.2f'|format(r.total_amount or 0) }}</td></tr>
+      {% endfor %}
+      <tr><td colspan="2"><strong>Grand Total</strong></td><td><strong>{{ '%.2f'|format(grand or 0) }}</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="footer-text">{{ POWERED_BY }}</div>
+  <div class="no-print" style="margin-top:8px;"><button class="btn btn-primary" onclick="window.print()">Print</button></div>
+</div>
+{% endif %}
+{% endblock %}

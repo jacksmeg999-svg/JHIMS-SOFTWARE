@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Dashboard</h2>
+  <p>Welcome, {{ session.get('user') }} ({{ session.get('role') }}).</p>
+  {% if session.get('role') in ['Admin','Cashier'] %}
+  <div class="card" style="margin-top:10px;">
+    <h3>Today's Cash Summary ({{ today }})</h3>
+    <p style="font-size:20px;margin:4px 0;"><strong>GHS {{ '%.2f'|format(total_today or 0) }}</strong></p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Patient History Timeline</h3>
+  <form method="get" class="no-print" style="margin-bottom:8px;">
+    <div class="row">
+      <div class="col">
+        <label>Patient ID</label>
+        <input type="text" name="patient_id" value="{{ patient_id or '' }}" placeholder="Enter Patient ID and press Enter">
+      </div>
+      {% if patient_id %}
+      <div class="col" style="flex:0 0 auto;min-width:160px;">
+        <label>&nbsp;</label><br>
+        <a class="btn btn-secondary" href="{{ url_for('bill_consolidation', patient_id=patient_id) }}">Open Bill Consolidation</a>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+  {% if patient_id and timeline %}
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Time</th><th>Source</th><th>Reference</th><th>Description</th><th>Amount (GHS)</th></tr>
+    </thead>
+    <tbody>
+      {% for row in timeline %}
+      <tr>
+        <td>{{ row.date }}</td>
+        <td>{{ row.t }}</td>
+        <td>{{ row.source }}</td>
+        <td>{{ row.ref }}</td>
+        <td>{{ row.label }}</td>
+        <td>{{ '%.2f'|format(row.amount or 0) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% elif patient_id %}
+  <p>No history found for this Patient ID yet.</p>
+  {% else %}
+  <p style="font-size:12px;color:#6b7280;">Enter a Patient ID above to see their receipts, lab invoices and mortuary bills in one timeline.</p>
+  {% endif %}
+</div>
+{% endblock %}
