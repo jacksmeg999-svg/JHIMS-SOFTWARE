@@ -322,10 +322,20 @@
   <body class="theme-{{ THEME|default('light') }}">
     <header>
       <img src="{{ url_for('static', filename='jhims_logo.png') }}" alt="JHIMS" onerror="this.style.display='none'">
-      <div>
-        <h1>{{ HOSPITAL_NAME }}</h1>
-        <div style="font-size:11px;">{{ HOSPITAL_ADDRESS }}</div>
-      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+    
+    {% if hospital and hospital.logo %}
+        <img src="{{ hospital.logo }}" alt="Logo" style="height:50px;">
+    {% endif %}
+
+    <div>
+        <h2 style="margin:0;">
+            {{ hospital.hospital_name or "My Hospital System" }}
+        </h2>
+        <small>{{ hospital.address }}</small>
+    </div>
+
+</div>
     </header>
     {% if session.get('user') %}
     <nav class="no-print">
@@ -334,6 +344,7 @@
       <a href="{{ url_for('lab') }}">Lab</a>
       <a href="{{ url_for('mortuary') }}">Mortuary</a>
       <a href="{{ url_for('reports_home') }}">Reports</a>
+      <a href="{{ url_for('settings') }}">Settings</a>
       {% if session.get('role') in ['Admin','Cashier'] %}<a href="{{ url_for('bill_consolidation') }}">Bill Consolidation</a>{% endif %}
       {% if session.get('role') == 'Admin' %}
       <a href="{{ url_for('manage_users') }}">Accounts</a>

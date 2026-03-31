@@ -1,3 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -196,10 +199,10 @@ body::after {
 <body>
 
 <div class="login-box">
-    <h2>{{ HOSPITAL_NAME }}</h2>
-    <p>Hospital Management System</p>
+    <h2>{{ JHIMS }}</h2>
+    <p>JACK HOSPITAL MANAGEMENT SYSTEM</p>
 
-```
+
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
     {% for category, message in messages %}
@@ -227,7 +230,7 @@ body::after {
 <div class="footer">
     {{ POWERED_BY }}
 </div>
-```
+
 
 </div>
 
@@ -245,3 +248,5 @@ function startLoading() {
 </script>
 
 </body>
+
+{% endblock %}

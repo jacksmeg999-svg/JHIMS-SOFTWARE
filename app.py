@@ -53,6 +53,24 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.context_processor
+def inject_hospital():
+    return dict(hospital=get_hospital())
+
+def init_settings():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS hospital_settings (
+            id INTEGER PRIMARY KEY,
+            hospital_name TEXT,
+            address TEXT,
+            phone TEXT,
+            logo TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
 
 def init_db():
     conn = get_db()
@@ -391,6 +409,14 @@ def calculate_bill(deposit_date):
 
     return days, total
 
+def get_hospital():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM hospital_settings LIMIT 1")
+    data = c.fetchone()
+    conn.close()
+    return data
+
 def login_required(role=None):
     def deco(f):
         @wraps(f)
@@ -674,6 +700,31 @@ def receipt_view(rec_id):
         flash("Receipt not found.", "danger")
         return redirect(url_for("cashier"))
     return render_template("receipt.html", rec=rec)
+
+@app.route("/settings/hospital", methods=["GET", "POST"])
+@login_required()
+def hospital_settings():
+    conn = get_db()
+    c = conn.cursor()
+
+    if request.method == "POST":
+        name = request.form["hospital_name"]
+        address = request.form["address"]
+        phone = request.form["phone"]
+        logo = request.form["logo"]
+
+        c.execute("DELETE FROM hospital_settings")
+        c.execute("""
+            INSERT INTO hospital_settings (hospital_name, address, phone, logo)
+            VALUES (?, ?, ?, ?)
+        """, (name, address, phone, logo))
+        conn.commit()
+
+    c.execute("SELECT * FROM hospital_settings LIMIT 1")
+    data = c.fetchone()
+    conn.close()
+
+    return render_template("hospital_settings.html", data=data)
 
 
 @app.route("/cashier/edit/<int:rec_id>", methods=["GET", "POST"])
@@ -1468,6 +1519,42 @@ def settings_services():
     conn.close()
     return render_template("settings_services.html", rows=rows)
 
+@app.route("/settings", methods=["GET", "POST"])
+@login_required(role="Admin")
+def settings():
+    conn = get_db()
+    c = conn.cursor()
+
+    if request.method == "POST":
+        name = request.form.get("hospital_name")
+        address = request.form.get("address")
+        phone = request.form.get("phone")
+        logo = request.form.get("logo")
+
+        c.execute("SELECT * FROM hospital_settings LIMIT 1")
+        existing = c.fetchone()
+
+        if existing:
+            c.execute("""
+                UPDATE hospital_settings
+                SET hospital_name=?, address=?, phone=?, logo=?
+                WHERE id=?
+            """, (name, address, phone, logo, existing["id"]))
+        else:
+            c.execute("""
+                INSERT INTO hospital_settings (hospital_name, address, phone, logo)
+                VALUES (?, ?, ?, ?)
+            """, (name, address, phone, logo))
+
+        conn.commit()
+        flash("Settings updated successfully!", "success")
+
+    c.execute("SELECT * FROM hospital_settings LIMIT 1")
+    data = c.fetchone()
+
+    conn.close()
+    return render_template("settings.html", data=data)
+
 
 @app.route("/admin/activity")
 @login_required(role="Admin")
@@ -1589,4 +1676,5 @@ def generate_mortuary_bill():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    init_settings()   # 👈 ADD THIS LINE
+    app.run(debug=True)

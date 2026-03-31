@@ -1,209 +1,244 @@
 {% extends "base.html" %}
+{% block extra_head %}
+<script>
+  // ===== Investigation popup (Lab selection inside Cashier) =====
+  let invTests = [];
+  let invInsured = false;
 
+  function inv_openModal(){
+    document.getElementById('inv-modal').style.display = 'flex';
+    inv_clearSelection();
+  }
+
+  function inv_closeModal(){
+    document.getElementById('inv-modal').style.display = 'none';
+  }
+
+  function inv_onServiceChange(sel){
+    if(sel.value === 'INVESTIGATION'){
+      inv_openModal();
+    }
+  }
+
+  function inv_toggleTest(cb, ins, nonIns){
+    invInsured = document.querySelector('input[name="inv_insured"]:checked').value === 'Insured';
+    const price = invInsured ? ins : nonIns;
+    const name = cb.dataset.name;
+    if(cb.checked){
+      invTests.push({name:name, price:price});
+    }else{
+      invTests = invTests.filter(t => t.name !== name);
+    }
+    inv_updateTotal();
+  }
+
+  function inv_refreshPrices(){
+    invInsured = document.querySelector('input[name="inv_insured"]:checked').value === 'Insured';
+    const rows = document.querySelectorAll('#inv-tests-table tr[data-ins][data-non]');
+    rows.forEach(function(row){
+      const ins = parseFloat(row.dataset.ins);
+      const nonIns = parseFloat(row.dataset.non);
+      row.querySelector('.inv-price').textContent = (invInsured ? ins : nonIns).toFixed(2);
+    });
+    // update selected tests prices too
+    invTests.forEach(function(t){
+      const row = Array.from(rows).find(r => r.dataset.test === t.name);
+      if(row){
+        const ins = parseFloat(row.dataset.ins);
+        const nonIns = parseFloat(row.dataset.non);
+        t.price = invInsured ? ins : nonIns;
+      }
+    });
+    inv_updateTotal();
+  }
+
+  function inv_updateTotal(){
+    let total = 0;
+    invTests.forEach(t => total += t.price);
+    document.getElementById('inv-total').textContent = "Total: GHS " + total.toFixed(2);
+  }
+
+  function inv_clearSelection(){
+    invTests = [];
+    document.querySelectorAll('.inv-test-cb').forEach(cb => cb.checked = false);
+    document.getElementById('inv-total').textContent = "Total: GHS 0.00";
+  }
+
+  function inv_applyToCashier(){
+    let total = 0;
+    invTests.forEach(t => total += t.price);
+    const amtInput = document.querySelector('input[name="amount_paid"]');
+    const detailsInput = document.querySelector('textarea[name="details"]');
+    if(amtInput){
+      amtInput.value = total.toFixed(2);
+    }
+    if(detailsInput){
+      let lines = ["INVESTIGATION LAB TESTS:"];
+      invTests.forEach(t => {
+        lines.push(" - " + t.name + " : GHS " + t.price.toFixed(2));
+      });
+      lines.push("TOTAL: GHS " + total.toFixed(2));
+      if(detailsInput.value.trim()){
+        detailsInput.value = detailsInput.value + "\n\n" + lines.join("\n");
+      }else{
+        detailsInput.value = lines.join("\n");
+      }
+    }
+    inv_closeModal();
+  }
+</script>
+{% endblock %}
 {% block content %}
-
-<style>
-body {
-    background: linear-gradient(135deg,#e3f2fd,#fce4ec);
-    font-family: "Segoe UI";
-}
-
-.card {
-    border-radius: 18px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    animation: fadeIn 0.6s ease;
-}
-
-.header {
-    font-size: 26px;
-    font-weight: bold;
-    color: #0a7b83;
-}
-
-input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    transition: 0.3s;
-}
-
-input:focus, select:focus, textarea:focus {
-    border-color: #0a7b83;
-    box-shadow: 0 0 8px rgba(10,123,131,0.3);
-}
-
-.btn {
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.btn-primary {
-    background: linear-gradient(45deg,#0072ff,#00c6ff);
-    color: white;
-}
-
-.btn-success {
-    background: linear-gradient(45deg,#28a745,#20c997);
-    color: white;
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-}
-
-.btn:hover {
-    transform: scale(1.05);
-}
-
-.badge-mortuary {
-    background:#ff9800;
-    color:white;
-    padding:4px 8px;
-    border-radius:6px;
-}
-
-.badge-lab {
-    background:#0072ff;
-    color:white;
-    padding:4px 8px;
-    border-radius:6px;
-}
-
-@keyframes fadeIn {
-from {opacity:0; transform:translateY(20px);}
-to {opacity:1; transform:translateY(0);}
-}
-</style>
-
-<div class="card" style="padding:20px;">
-
-<div style="display:flex;justify-content:space-between;align-items:center;">
-    <div class="header">💳 Cashier Panel</div>
-    <button class="btn btn-secondary" onclick="location.reload()">🔄 Refresh</button>
-</div>
-
-<!-- LOAD -->
-
-<form method="get" style="margin-top:15px;">
-    <div style="display:flex;gap:10px;">
-        <input type="text" name="load_pid" placeholder="Load by Patient ID">
-        <input type="text" name="corpse_id" placeholder="Load by Corpse ID">
-        <button class="btn btn-primary">Load</button>
+<style>.cashier-grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px;align-items:flex-end;}</style>
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">Cashier - Receipts</h2>
+    <div class="no-print">
+      <button class="btn btn-secondary" type="button" onclick="location.reload()">Refresh</button>
     </div>
-</form>
+  </div>
 
-<hr>
+  <form method="get" class="no-print" style="margin-top:8px;margin-bottom:8px;">
+    <div class="row">
+      <div class="col">
+        <label>Load from Lab / Mortuary by Patient ID</label>
+        <input type="text" name="load_pid" value="{{ request.args.get('load_pid','') }}">
+      </div>
+      <div>
+        <label>&nbsp;</label><br>
+        <button class="btn btn-secondary" type="submit">Load</button>
+      </div>
+    </div>
+  </form>
 
-<!-- FORM -->
-
-<form method="post">
-
-<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">
-
-<div>
-<label>Patient ID</label>
-<input name="patient_id" value="{{ prefill['patient_id'] if prefill else '' }}">
+  <form method="post" class="no-print">
+    <div class="cashier-grid">
+    <div class="row">
+      <div class="col">
+        <label>Patient ID</label>
+        <input type="text" name="patient_id" value="{{ prefill.patient_id if prefill else '' }}">
+      </div>
+      <div class="col">
+        <label>Patient Name</label>
+        <input type="text" name="patient_name" required value="{{ prefill.patient_name if prefill else '' }}">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Service Received</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select name="service_received" required onchange="inv_onServiceChange(this)">
+            <option value="">-- select --</option>
+            {% for s in SERVICES %}
+            <option value="{{ s }}" {% if prefill and prefill.service_received==s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-secondary" type="button" onclick="inv_openModal()">Investigation tests</button>
+        </div>
+      </div>
+      <div class="col">
+        <label>Amount Paid (GHS)</label>
+        <input type="number" step="0.01" name="amount_paid" required value="{{ prefill.amount_paid if prefill else '' }}">
+      </div>
+      <div class="col">
+        <label>Payment Method</label>
+        <select name="payment_method">
+          <option>Cash</option>
+          <option>Mobile Money</option>
+          <option>Card</option>
+          <option>Bank Transfer</option>
+        </select>
+      </div>
+    </div>
+    </div>
+    <div>
+      <label>Details (lab / mortuary notes etc.)</label>
+      <textarea name="details">{{ prefill.details if prefill else '' }}</textarea>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="btn btn-primary" type="submit">Save &amp; Print</button>
+      <button class="btn btn-secondary" type="reset">Clear form</button>
+    </div>
+  </form>
 </div>
 
-<div>
-<label>Patient Name</label>
-<input name="patient_name" value="{{ prefill['patient_name'] if prefill else '' }}">
+<!-- Investigation selection popup -->
+<div id="inv-modal" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.4);align-items:center;justify-content:center;z-index:1000;">
+  <div style="background:#fff;border-radius:10px;max-width:800px;width:95%;max-height:90vh;padding:12px;box-shadow:0 10px 25px rgba(15,23,42,0.3);overflow:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h3 style="margin:0;">Select Lab Tests for INVESTIGATION</h3>
+      <button class="btn btn-secondary" type="button" onclick="inv_closeModal()">Close</button>
+    </div>
+    <div style="margin-bottom:4px;">
+      <label>Price type:</label>
+      <label><input type="radio" name="inv_insured" value="Insured" onchange="inv_refreshPrices()"> Insured</label>
+      <label style="margin-left:8px;"><input type="radio" name="inv_insured" value="Non-insured" checked onchange="inv_refreshPrices()"> Non-insured</label>
+    </div>
+    <div style="max-height:300px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;">
+      <table id="inv-tests-table">
+        <thead>
+          <tr><th></th><th>Lab Test</th><th>Price (current)</th><th>Insured</th><th>Non-insured</th></tr>
+        </thead>
+        <tbody>
+          {% for t in LAB_TESTS %}
+          <tr data-test="{{ t.name }}" data-ins="{{ t.insured_price }}" data-non="{{ t.non_insured_price }}">
+            <td><input type="checkbox" class="inv-test-cb" data-name="{{ t.name }}" onchange="inv_toggleTest(this, {{ t.insured_price }}, {{ t.non_insured_price }})"></td>
+            <td>{{ t.name }}</td>
+            <td class="inv-price">{{ '%.2f'|format(t.non_insured_price) }}</td>
+            <td>{{ '%.2f'|format(t.insured_price) }}</td>
+            <td>{{ '%.2f'|format(t.non_insured_price) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p id="inv-total" style="margin-top:6px;"><strong>Total: GHS 0.00</strong></p>
+    <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end;">
+      <button class="btn btn-secondary" type="button" onclick="inv_clearSelection()">Clear selection</button>
+      <button class="btn btn-primary" type="button" onclick="inv_applyToCashier()">Use in Cashier form</button>
+    </div>
+  </div>
 </div>
 
-<div>
-<label>Service</label>
-<select name="service_received">
-<option value="">Select</option>
-<option value="Mortuary"
-{% if prefill and prefill['service_received']=='Mortuary' %}selected{% endif %}>
-Mortuary
-</option>
-<option value="INVESTIGATION"
-{% if prefill and prefill['service_received']=='INVESTIGATION' %}selected{% endif %}>
-Lab Investigation
-</option>
-</select>
+<div class="card no-print">
+  <h3>Recent Receipts</h3>
+  <form method="get" style="margin-bottom:6px;">
+    <div class="row">
+      <div class="col">
+        <input type="text" name="q" placeholder="Search name / receipt / patient ID..." value="{{ q }}">
+      </div>
+      <div><button class="btn btn-secondary" type="submit">Search</button></div>
+    </div>
+  </form>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Date</th><th>Receipt #</th><th>Patient ID</th><th>Patient</th><th>Service</th><th>Amount</th><th>Cashier</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.date }}</td>
+        <td>{{ r.receipt_number }}</td>
+        <td>{{ r.patient_id }}</td>
+        <td>{{ r.patient_name }}</td>
+        <td>{{ r.service_received }}</td>
+        <td>{{ '%.2f'|format(r.amount_paid or 0) }}</td>
+        <td>{{ r.cashier_name }}</td>
+        <td>
+          <a class="btn btn-secondary" href="{{ url_for('receipt_view', rec_id=r.id) }}" target="_blank">Print</a>
+          {% if session.get('role') == 'Admin' %}
+          <a class="btn btn-secondary" href="{{ url_for('edit_receipt', rec_id=r.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('delete_receipt', rec_id=r.id) }}" style="display:inline;">
+            <button class="btn btn-danger" type="submit" onclick="return confirm('Delete receipt?')">Del</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
-
-<div>
-<label>Amount (GHS)</label>
-<input type="number" name="amount_paid" value="{{ prefill['amount_paid'] if prefill else '' }}">
-</div>
-
-<div>
-<label>Payment Method</label>
-<select name="payment_method">
-<option>Cash</option>
-<option>Mobile Money</option>
-<option>Card</option>
-<option>Bank Transfer</option>
-</select>
-</div>
-
-</div>
-
-<div style="margin-top:10px;">
-<label>Details</label>
-<textarea name="details">{{ prefill['details'] if prefill else '' }}</textarea>
-</div>
-
-<div style="margin-top:15px;display:flex;gap:10px;">
-<button class="btn btn-success">💾 Save & Print</button>
-<button class="btn btn-secondary" type="reset">Clear</button>
-</div>
-
-</form>
-
-</div>
-
-<!-- RECEIPTS -->
-
-<div class="card" style="padding:20px;margin-top:20px;">
-
-<h3>📄 Recent Receipts</h3>
-
-<table style="width:100%;margin-top:10px;">
-<tr style="background:#f1f1f1;">
-<th>ID</th>
-<th>Patient</th>
-<th>Service</th>
-<th>Amount</th>
-<th>Action</th>
-</tr>
-
-{% for r in rows %}
-
-<tr>
-
-<td>{{ r.id }}</td>
-<td>{{ r.patient_name }}</td>
-
-<td>
-{% if r.service_received == "Mortuary" %}
-<span class="badge-mortuary">Mortuary</span>
-{% else %}
-<span class="badge-lab">Lab</span>
-{% endif %}
-</td>
-
-<td><strong>GHS {{ r.amount_paid }}</strong></td>
-
-<td>
-<a href="{{ url_for('receipt_view', rec_id=r.id) }}" target="_blank">
-<button class="btn btn-primary">Print</button>
-</a>
-</td>
-
-</tr>
-{% endfor %}
-
-</table>
-
-</div>
-
 {% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="max-width:600px; margin:auto; padding:20px;">
+
+    <h2>🏥 Hospital Settings</h2>
+
+    <form method="POST">
+
+        <label>Hospital Name</label>
+        <input type="text" name="hospital_name" value="{{ data.hospital_name if data else '' }}" required>
+
+        <label>Address</label>
+        <input type="text" name="address" value="{{ data.address if data else '' }}">
+
+        <label>Phone</label>
+        <input type="text" name="phone" value="{{ data.phone if data else '' }}">
+
+        <label>Logo URL (e.g /static/logo.png)</label>
+        <input type="text" name="logo" value="{{ data.logo if data else '' }}">
+
+        <br><br>
+        <button type="submit">💾 Save Settings</button>
+
+    </form>
+
+</div>
+
+<style>
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #00b894;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+}
+</style>
+
+{% endblock %}

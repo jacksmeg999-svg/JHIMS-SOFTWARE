@@ -1,11 +1,124 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="card">
-  <h2>Reports</h2>
-  <ul>
-    <li><a href="{{ url_for('reports_patient') }}">Patient receipts (date range)</a></li>
-    <li><a href="{{ url_for('reports_services') }}">Services summary (date range)</a></li>
-    <li><a href="{{ url_for('reports_mortuary') }}">Mortuary bills (date range)</a></li>
-  </ul>
+
+<style>
+body {
+    background: linear-gradient(135deg,#1f4037,#99f2c8);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Container */
+.reports-container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+/* Title */
+.header {
+    text-align: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 30px;
+    animation: fadeDown 0.6s ease;
+}
+
+/* Cards layout */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 20px;
+}
+
+/* Card style */
+.card-box {
+    padding: 30px;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    animation: fadeUp 0.5s ease;
+}
+
+.card-box:hover {
+    transform: translateY(-8px) scale(1.05);
+}
+
+/* Individual colors */
+.patient { background: linear-gradient(45deg,#2196f3,#00c6ff); }
+.services { background: linear-gradient(45deg,#ff9800,#ffc107); }
+.mortuary { background: linear-gradient(45deg,#e91e63,#ff4081); }
+
+/* Icon */
+.icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+/* Title */
+.card-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Description */
+.card-desc {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Animations */
+@keyframes fadeUp {
+    from {opacity:0; transform:translateY(30px);}
+    to {opacity:1; transform:translateY(0);}
+}
+
+@keyframes fadeDown {
+    from {opacity:0; transform:translateY(-20px);}
+    to {opacity:1; transform:translateY(0);}
+}
+</style>
+
+<div class="reports-container">
+
+<div class="header">📊 Reports Dashboard</div>
+
+<div class="cards">
+
+<!-- PATIENT -->
+
+<a href="{{ url_for('reports_patient') }}" style="text-decoration:none;">
+<div class="card-box patient">
+    <div class="icon">👤</div>
+    <div class="card-title">Patient Receipts</div>
+    <div class="card-desc">View all patient payments within a date range</div>
 </div>
+</a>
+
+<!-- SERVICES -->
+
+<a href="{{ url_for('reports_services') }}" style="text-decoration:none;">
+<div class="card-box services">
+    <div class="icon">📦</div>
+    <div class="card-title">Services Summary</div>
+    <div class="card-desc">Analyze services revenue and performance</div>
+</div>
+</a>
+
+<!-- MORTUARY -->
+
+<a href="{{ url_for('reports_mortuary') }}" style="text-decoration:none;">
+<div class="card-box mortuary">
+    <div class="icon">⚰️</div>
+    <div class="card-title">Mortuary Reports</div>
+    <div class="card-desc">Track mortuary bills and discharge history</div>
+</div>
+</a>
+
+</div>
+
+</div>
+
 {% endblock %}
