@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(135deg,#1e3c72,#2a5298);
+    animation: bgMove 8s infinite alternate;
+}
+
+@keyframes bgMove {
+    from { background-position: left; }
+    to { background-position: right; }
+}
+
+.container {
+    max-width:900px;
+    margin:auto;
+    margin-top:30px;
+    padding:30px;
+    border-radius:20px;
+    background:rgba(255,255,255,0.95);
+    box-shadow:0 20px 40px rgba(0,0,0,0.3);
+    animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+}
+
+h2 {
+    text-align:center;
+    margin-bottom:20px;
+    color:#333;
+}
+
+.grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+input, select {
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    transition:0.3s;
+}
+
+input:focus, select:focus {
+    border-color:#0072ff;
+    box-shadow:0 0 8px rgba(0,114,255,0.5);
+}
+
+.full {
+    grid-column: span 2;
+}
+
+button {
+    margin-top:15px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+    color:white;
+    background: linear-gradient(45deg,#00c6ff,#0072ff);
+    transition:0.3s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg,#ff6a00,#ee0979);
+}
+</style>
+
+<div class="container">
+
+<h2>🏥 Admit Patient</h2>
+
+<form method="POST">
+
+<div class="grid">
+
+<input type="text" name="patient_id" placeholder="Patient ID" required>
+
+<input type="text" name="patient_name" placeholder="Patient Name" required>
+
+<input type="text" name="age" placeholder="Age">
+
+<select name="sex">
+<option value="">Select Gender</option>
+<option>Male</option>
+<option>Female</option>
+</select>
+
+<input type="text" name="diagnosis" placeholder="Diagnosis" class="full">
+
+<input type="text" name="doctor" placeholder="Doctor Assigned">
+
+<input type="text" name="ward" placeholder="Ward">
+
+<input type="text" name="bed" placeholder="Bed Number">
+
+<input type="date" name="admission_date" class="full">
+
+</div>
+
+<button type="submit">💾 Admit Patient</button>
+
+</form>
+
+</div>
+
+{% endblock %}

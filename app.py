@@ -76,6 +76,39 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
 
+def init_ipd():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS ipd (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id TEXT,
+            patient_name TEXT,
+            age TEXT,
+            sex TEXT,
+            diagnosis TEXT,
+            doctor TEXT,
+            ward TEXT,
+            bed TEXT,
+            admission_date TEXT,
+            status TEXT DEFAULT 'Admitted'
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS ipd_services (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            admission_id INTEGER,
+            service_name TEXT,
+            amount REAL,
+            date TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
     c.execute("CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT)")
 
     c.execute(
@@ -505,6 +538,11 @@ def logout():
     return redirect(url_for("login"))
 
 
+@app.route("/ipd")
+@login_required()
+def ipd():
+    return render_template("ipd.html")
+
 
 @app.route("/dashboard")
 @login_required()
@@ -700,6 +738,7 @@ def receipt_view(rec_id):
         flash("Receipt not found.", "danger")
         return redirect(url_for("cashier"))
     return render_template("receipt.html", rec=rec)
+
 
 @app.route("/settings/hospital", methods=["GET", "POST"])
 @login_required()
@@ -1673,6 +1712,72 @@ def generate_mortuary_bill():
         total=total,
         show_bill=True
     )
+
+@app.route("/ipd/admit", methods=["GET", "POST"])
+@login_required()
+def ipd_admit():
+    conn = get_db()
+    c = conn.cursor()
+
+    if request.method == "POST":
+        patient_id = request.form.get("patient_id")
+        patient_name = request.form.get("patient_name")
+        age = request.form.get("age")
+        sex = request.form.get("sex")
+        diagnosis = request.form.get("diagnosis")
+        doctor = request.form.get("doctor")
+        ward = request.form.get("ward")
+        bed = request.form.get("bed")
+        admission_date = request.form.get("admission_date")
+
+        c.execute("""
+            INSERT INTO ipd
+            (patient_id, patient_name, age, sex, diagnosis, doctor, ward, bed, admission_date)
+            VALUES (?,?,?,?,?,?,?,?,?)
+        """, (
+            patient_id, patient_name, age, sex,
+            diagnosis, doctor, ward, bed, admission_date
+        ))
+
+        conn.commit()
+        conn.close()
+
+        flash("Patient admitted successfully!", "success")
+        return redirect("/ipd")
+
+    return render_template("ipd_admit.html")
+
+@app.route('/ipd/patients')
+def ipd_patients():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM ipd ORDER BY id DESC")
+    patients = c.fetchall()
+
+    conn.close()
+
+    return render_template("ipd_patients.html", patients=patients)
+
+@app.route('/ipd/discharge/<int:id>')
+def discharge_patient(id):
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("UPDATE ipd SET status='Discharged' WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+
+    return redirect('/ipd/patients')
+
+@app.route('/ipd/send_to_cashier/<int:id>')
+def send_to_cashier(id):
+    return redirect('/cashier')
+
+@app.route('/ipd/send_to_lab/<int:id>')
+def send_to_lab(id):
+    return redirect('/lab')
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(135deg,#1f4037,#99f2c8);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* TITLE */
+.title {
+    text-align:center;
+    color:white;
+    margin-top:20px;
+    font-size:28px;
+    animation: fadeIn 1s ease;
+}
+
+/* TABLE */
+.table-container {
+    margin:30px;
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    animation: fadeIn 1s ease;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+}
+
+th {
+    background:#0072ff;
+    color:white;
+    padding:12px;
+}
+
+td {
+    padding:12px;
+    text-align:center;
+}
+
+tr {
+    transition:0.3s;
+}
+
+tr:hover {
+    background:#f5f5f5;
+}
+
+/* STATUS */
+.status {
+    padding:5px 10px;
+    border-radius:10px;
+    color:white;
+}
+
+.admitted { background:green; }
+.discharged { background:red; }
+
+/* BUTTONS */
+.btn {
+    padding:6px 10px;
+    border:none;
+    border-radius:8px;
+    color:white;
+    cursor:pointer;
+    margin:2px;
+}
+
+.discharge { background:red; }
+.cashier { background:blue; }
+.lab { background:purple; }
+
+.btn:hover {
+    transform:scale(1.1);
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+}
+</style>
+
+<h2 class="title">🏥 Admitted Patients</h2>
+
+<div class="table-container">
+
+<table>
+<thead>
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Ward</th>
+    <th>Bed</th>
+    <th>Doctor</th>
+    <th>Status</th>
+    <th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for p in patients %}
+
+<tr>
+
+<td>{{ p[0] }}</td>
+<td>{{ p[2] }}</td>
+<td>{{ p[7] }}</td>
+<td>{{ p[8] }}</td>
+<td>{{ p[6] }}</td>
+
+<td>
+    {% if p[10] == 'Admitted' %}
+        <span class="status admitted">Admitted</span>
+    {% else %}
+        <span class="status discharged">Discharged</span>
+    {% endif %}
+</td>
+
+<td>
+    <a href="/ipd/discharge/{{ p[0] }}">
+        <button class="btn discharge">Discharge</button>
+    </a>
+
+```
+<a href="/ipd/send_to_cashier/{{ p[0] }}">
+    <button class="btn cashier">Cashier</button>
+</a>
+
+<a href="/ipd/send_to_lab/{{ p[0] }}">
+    <button class="btn lab">Lab</button>
+</a>
+```
+
+</td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+{% endblock %}

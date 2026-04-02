@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* HEADER */
+.ipd-title {
+    color:green;
+    text-align:center;
+    margin-top:20px;
+    font-size:28px;
+    animation: fadeIn 1s ease;
+}
+
+/* GRID */
+.grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap:20px;
+    padding:30px;
+}
+
+/* CARD */
+.card {
+    padding:25px;
+    border-radius:20px;
+    color:black;
+    text-align:center;
+    cursor:pointer;
+    transition:0.4s;
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+    position:relative;
+    overflow:hidden;
+}
+
+/* HOVER EFFECT */
+.card:hover {
+    transform:translateY(-10px) scale(1.05);
+}
+
+/* ICON */
+.icon {
+    font-size:30px;
+    margin-bottom:10px;
+}
+
+/* TITLE */
+.title {
+    font-size:18px;
+    margin-bottom:5px;
+}
+
+/* COUNT */
+.count {
+    font-size:26px;
+    font-weight:bold;
+}
+
+/* COLORS */
+.blue { background: linear-gradient(135deg,#00c6ff,#0072ff); }
+.green { background: linear-gradient(135deg,#00b09b,#96c93d); }
+.orange { background: linear-gradient(135deg,#ffb347,#ffcc33); }
+.red { background: linear-gradient(135deg,#ff416c,#ff4b2b); }
+.purple { background: linear-gradient(135deg,#7f00ff,#e100ff); }
+.teal { background: linear-gradient(135deg,#11998e,#38ef7d); }
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+}
+</style>
+
+<h2 class="ipd-title">🏥 In-Patient Dashboard</h2>
+
+<div class="grid">
+
+<!-- ADMIT -->
+
+<div class="card blue" onclick="location.href='/ipd/admit'">
+    <div class="icon">➕</div>
+    <div class="title">Admit Patient</div>
+</div>
+
+<!-- BEDS -->
+
+<div class="card green">
+    <div class="icon">🛏</div>
+    <div class="title">Beds Available</div>
+    <div class="count">{{ beds }}</div>
+</div>
+
+<!-- ADMITTED -->
+
+<div class="card orange">
+    <div class="icon">📋</div>
+    <div class="title">Admitted Patients</div>
+    <div class="count">{{ admitted }}</div>
+</div>
+
+<!-- TOTAL -->
+
+<div class="card purple">
+    <div class="icon">👥</div>
+    <div class="title">Total Patients</div>
+    <div class="count">{{ total }}</div>
+</div>
+
+<!-- BILLING -->
+
+<div class="card red" onclick="location.href='/cashier'">
+    <div class="icon">💰</div>
+    <div class="title">Billing</div>
+</div>
+
+<!-- LAB -->
+
+<div class="card teal" onclick="location.href='/lab'">
+    <div class="icon">🧪</div>
+    <div class="title">Lab Requests</div>
+</div>
+
+</div>
+
+{% endblock %}
