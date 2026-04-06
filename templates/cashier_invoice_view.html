@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--cash:#0d9488;--radius:14px;}
+.inv-header{background:linear-gradient(135deg,#065f46,#0d9488);border-radius:var(--radius);padding:20px 26px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;box-shadow:0 6px 20px rgba(13,148,136,.3);}
+.wrap{max-width:700px;margin:0 auto;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--cash);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ccfbf1;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.87rem;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:#64748b;}.info-row .v{font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:.86rem;}
+thead th{background:linear-gradient(135deg,#065f46,#0d9488);color:#fff;padding:9px 12px;text-align:left;font-size:.76rem;font-weight:600;text-transform:uppercase;}
+tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+.total-box{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #10b981;border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+.total-val{font-size:2rem;font-weight:900;color:#0d9488;}
+.pay-form{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #10b981;border-radius:14px;padding:18px 22px;margin-top:14px;}
+.pay-form label{display:block;font-size:.76rem;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+.pay-form select{width:100%;padding:10px 14px;border:2px solid #6ee7b7;border-radius:10px;font-size:.9rem;outline:none;background:#fff;margin-bottom:12px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-pay{background:linear-gradient(135deg,#0d9488,#059669);color:#fff;width:100%;justify-content:center;padding:14px;font-size:1rem;}
+.btn-back{background:#f1f5f9;color:#1e293b;border:1px solid #e2e8f0;}
+.btn-print{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.paid-banner{background:#d1fae5;border:2px solid #10b981;border-radius:12px;padding:16px 20px;text-align:center;}
+.paid-banner .pv{font-size:1.5rem;font-weight:900;color:#065f46;}
+@media print{.no-print{display:none!important;} body{background:#fff;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+<div class="inv-header no-print">
+  <div>
+    <h2 style="margin:0;font-size:1.2rem;font-weight:800;">🧾 Invoice — {{ invoice.invoice_no }}</h2>
+    <p style="opacity:.8;margin:4px 0 0;font-size:.84rem;">{{ HOSPITAL_NAME }}</p>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.print()" class="btn btn-print">🖨️ Print</button>
+    <a href="{{ url_for('cashier') }}" class="btn btn-back">← Cashier</a>
+  </div>
+</div>
+<div class="panel">
+  <div class="panel-title">📋 Invoice Details</div>
+  <div class="info-row"><span class="k">Invoice No.</span><span class="v">{{ invoice.invoice_no }}</span></div>
+  <div class="info-row"><span class="k">Type</span><span class="v">{{ invoice.invoice_type }}</span></div>
+  <div class="info-row"><span class="k">Patient</span><span class="v">{{ invoice.patient_name }}</span></div>
+  <div class="info-row"><span class="k">Patient ID</span><span class="v">{{ invoice.patient_id or '—' }}</span></div>
+  <div class="info-row"><span class="k">OPD No.</span><span class="v">{{ invoice.opd_number or '—' }}</span></div>
+  <div class="info-row"><span class="k">Created</span><span class="v">{{ invoice.created_at }}</span></div>
+  {% if invoice.notes %}<div class="info-row"><span class="k">Notes</span><span class="v">{{ invoice.notes }}</span></div>{% endif %}
+</div>
+<div class="panel">
+  <div class="panel-title">📦 Items</div>
+  {% if items %}
+  <table>
+    <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.get('name','') or item.get('description','') or item.get('service','') }}</td>
+        <td>{{ item.get('qty',1) }}</td>
+        <td>GHS {{ "%.2f"|format(float(item.get('unit_price',0) or item.get('price',0) or 0)) }}</td>
+        <td><strong>GHS {{ "%.2f"|format(float(item.get('total',0) or item.get('amount',0) or 0)) }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:#64748b;font-size:.84rem;">No itemised breakdown.</p>
+  {% endif %}
+  <div class="total-box">
+    <div>
+      <div style="font-size:.74rem;font-weight:700;color:#0d9488;text-transform:uppercase;">Total Amount</div>
+      <div class="total-val">GHS {{ "%.2f"|format(invoice.total_amount or 0) }}</div>
+    </div>
+    <div style="font-size:.78rem;color:#065f46;text-align:right;">{{ invoice.invoice_no }}<br>{{ HOSPITAL_NAME }}</div>
+  </div>
+</div>
+{% if invoice.is_paid %}
+<div class="paid-banner no-print">
+  <div class="pv">✅ PAID</div>
+  <div style="font-size:.88rem;color:#065f46;margin-top:4px;">Receipt: {{ invoice.receipt_no }} · {{ invoice.paid_at }}</div>
+</div>
+{% else %}
+<div class="pay-form no-print">
+  <div style="font-size:.9rem;font-weight:700;color:#065f46;margin-bottom:12px;">💰 Record Payment</div>
+  <form method="post" action="{{ url_for('cashier_pay_invoice', inv_no=invoice.invoice_no) }}">
+    <label>Payment Method</label>
+    <select name="payment_method">
+      <option>Cash</option><option>Mobile Money</option>
+      <option>Card</option><option>Bank Transfer</option><option>NHIS</option>
+    </select>
+    <button type="submit" class="btn btn-pay" onclick="return confirm('Confirm payment?')">
+      ✅ Confirm Payment — GHS {{ "%.2f"|format(invoice.total_amount or 0) }}
+    </button>
+  </form>
+</div>
+{% endif %}
+</div>
+{% endblock %}

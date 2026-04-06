@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Service Card — {{ patient.full_name }}</title>
+<style>
+  :root{--primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--nhis:#7c3aed;--secondary:#06b6d4;--bg:#f0f4ff;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(135deg,var(--primary),#7c3aed);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(79,70,229,.35);}
+  .topbar h1{color:#fff;font-size:1.3rem;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.18);}
+  .btn-back{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.5);}
+  .btn-submit{background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;padding:14px 36px;font-size:1rem;width:100%;}
+  .wrap{max-width:680px;margin:30px auto;padding:0 20px 40px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:20px;animation:slideUp .4s ease;}
+  .card-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;display:flex;align-items:center;gap:8px;}
+
+  /* Patient card summary */
+  .patient-summary{background:linear-gradient(135deg,#e0e7ff,#ede9fe);border-radius:12px;padding:20px;margin-bottom:20px;}
+  .patient-summary .name{font-size:1.3rem;font-weight:800;color:var(--primary);}
+  .patient-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .detail-item{font-size:.85rem;}
+  .detail-item .key{color:var(--muted);font-weight:600;font-size:.76rem;text-transform:uppercase;}
+  .detail-item .val{font-weight:700;color:var(--text);}
+  .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.74rem;font-weight:700;}
+  .badge-nhis{background:#ede9fe;color:#7c3aed;}
+  .badge-nonins{background:#fee2e2;color:#dc2626;}
+
+  .funding-toggle{display:flex;gap:12px;margin-top:6px;}
+  .funding-option{flex:1;position:relative;}
+  .funding-option input[type=radio]{display:none;}
+  .funding-option label{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;font-size:.9rem;font-weight:600;text-transform:none;letter-spacing:0;transition:all .2s;color:var(--text);gap:6px;}
+  .funding-option label .ico{font-size:1.8rem;}
+  .funding-option input:checked + label{border-color:var(--primary);background:linear-gradient(135deg,#e0e7ff,#ede9fe);color:var(--primary);box-shadow:0 4px 14px rgba(79,70,229,.2);}
+  .funding-option.nhis-opt input:checked + label{border-color:var(--nhis);background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:var(--nhis);}
+  #nhis-fields{display:none;}
+  #nhis-fields.visible{display:block;animation:slideUp .3s ease;}
+  .fee-notice{background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid var(--warning);border-radius:12px;padding:16px 20px;margin-top:12px;display:none;}
+  .fee-notice.visible{display:block;}
+  .fee-notice .fee-amount{font-size:1.6rem;font-weight:800;color:#b45309;}
+  .ccc-box{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:2px solid var(--nhis);border-radius:12px;padding:16px 20px;margin-top:12px;display:none;}
+  .ccc-box.visible{display:block;}
+  .ccc-code{font-size:1.4rem;font-weight:800;color:var(--nhis);margin-top:4px;}
+  .alerts{padding:0 20px;max-width:680px;margin:16px auto;}
+  .alert{padding:13px 18px;border-radius:10px;margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:10px;}
+  .alert-success{background:#d1fae5;color:#065f46;border-left:4px solid var(--success);}
+  .alert-danger{background:#fee2e2;color:#991b1b;border-left:4px solid var(--danger);}
+  .alert-warning{background:#fef3c7;color:#92400e;border-left:4px solid var(--warning);}
+  label{font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  input,select{padding:11px 15px;border:2px solid var(--border);border-radius:10px;font-size:.93rem;outline:none;transition:border .2s;background:#fff;width:100%;margin-top:6px;}
+  input:focus,select:focus{border-color:var(--primary);}
+  @keyframes slideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>🪪 Service Card — {{ patient.full_name }}</h1>
+  <a href="{{ url_for('records') }}" class="btn btn-back">← Back</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}
+<div class="alerts">{% for cat,msg in messages %}<div class="alert alert-{{ cat }}">{{ msg }}</div>{% endfor %}</div>
+{% endif %}{% endwith %}
+
+<div class="wrap">
+
+  <!-- PATIENT SUMMARY -->
+  <div class="patient-summary">
+    <div class="name">{{ patient.full_name }}</div>
+    <div class="patient-detail-grid">
+      <div class="detail-item"><div class="key">OPD Number</div><div class="val">{{ patient.opd_number }}</div></div>
+      <div class="detail-item"><div class="key">Patient ID</div><div class="val">{{ patient.patient_id }}</div></div>
+      <div class="detail-item"><div class="key">Sex / Age</div><div class="val">{{ patient.sex }} / {{ patient.age or '—' }}</div></div>
+      <div class="detail-item"><div class="key">Phone</div><div class="val">{{ patient.phone or '—' }}</div></div>
+      <div class="detail-item"><div class="key">Current Funding</div><div class="val">
+        {% if patient.funding=='NHIS' %}<span class="badge badge-nhis">🛡️ NHIS</span>{% else %}<span class="badge badge-nonins">💵 Non-Insured</span>{% endif %}
+      </div></div>
+      <div class="detail-item"><div class="key">NHIS No.</div><div class="val">{{ patient.nhis_number or '—' }}</div></div>
+    </div>
+  </div>
+
+  <form method="post">
+    <div class="card">
+      <div class="card-title">💳 Select Funding for This Visit</div>
+      <div class="funding-toggle">
+        <div class="funding-option">
+          <input type="radio" name="funding" id="fund-nonins" value="Non-Insured" {% if patient.funding != 'NHIS' %}checked{% endif %} onchange="fundingChanged()" />
+          <label for="fund-nonins"><span class="ico">💵</span>Non-Insured<small style="color:var(--muted);font-weight:400">Pay consultation fee</small></label>
+        </div>
+        <div class="funding-option nhis-opt">
+          <input type="radio" name="funding" id="fund-nhis" value="NHIS" {% if patient.funding=='NHIS' %}checked{% endif %} onchange="fundingChanged()" />
+          <label for="fund-nhis"><span class="ico">🛡️</span>NHIS<small style="color:var(--muted);font-weight:400">Free consultation</small></label>
+        </div>
+      </div>
+
+      <div class="fee-notice {% if patient.funding != 'NHIS' %}visible{% endif %}" id="fee-notice">
+        <div style="font-size:.78rem;font-weight:700;color:#92400e;text-transform:uppercase;">⚠️ Consultation Fee</div>
+        <div class="fee-amount">GHS {{ "%.2f"|format(settings.consultation_fee_non_insured) }}</div>
+        <div style="font-size:.82rem;color:#92400e;margin-top:4px;">Patient will be sent to Cashier first.</div>
+      </div>
+
+      <div id="nhis-fields" class="{% if patient.funding=='NHIS' %}visible{% endif %}">
+        <div style="margin-top:16px;">
+          <label>NHIS Number</label>
+          <input type="text" name="nhis_number" id="nhis-input" value="{{ patient.nhis_number or '' }}" placeholder="Enter NHIS number" oninput="previewCCC()" />
+        </div>
+        <div class="ccc-box {% if patient.ccc_code %}visible{% endif %}" id="ccc-preview">
+          <div style="font-size:.78rem;font-weight:700;color:var(--nhis);text-transform:uppercase;">🏷️ CCC Code</div>
+          <div class="ccc-code" id="ccc-display">{{ patient.ccc_code or '—' }}</div>
+        </div>
+        <div style="background:#d1fae5;border:2px solid var(--success);border-radius:12px;padding:14px;margin-top:12px;">
+          <strong style="color:#065f46;">✅ NHIS — No fee required. Goes straight to Triage.</strong>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-submit">🪪 Service Card &amp; Generate Visit</button>
+  </form>
+</div>
+
+<script>
+function fundingChanged(){
+  const isNHIS=document.getElementById('fund-nhis').checked;
+  document.getElementById('nhis-fields').classList.toggle('visible',isNHIS);
+  document.getElementById('fee-notice').classList.toggle('visible',!isNHIS);
+}
+function previewCCC(){
+  const nhis=document.getElementById('nhis-input').value.trim();
+  const box=document.getElementById('ccc-preview');
+  const display=document.getElementById('ccc-display');
+  if(nhis.length>=4){
+    let h=0;for(let i=0;i<nhis.length;i++)h=((h<<5)-h)+nhis.charCodeAt(i);
+    h=Math.abs(h).toString(16).toUpperCase().padStart(12,'0');
+    display.textContent=`CCC/${h.slice(0,4)}-${h.slice(4,8)}-${h.slice(8,12)}`;
+    box.classList.add('visible');
+  } else { box.classList.remove('visible'); }
+}
+</script>
+</body>
+</html>

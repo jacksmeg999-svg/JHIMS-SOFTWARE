@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Records Settings</title>
+<style>
+  :root{--primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--bg:#f0f4ff;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(135deg,#1e293b,var(--primary));padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+  .topbar h1{color:#fff;font-size:1.2rem;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .btn:hover{transform:translateY(-2px);}
+  .btn-back{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.4);}
+  .btn-save{background:linear-gradient(135deg,var(--success),#059669);color:#fff;width:100%;padding:14px;font-size:1rem;}
+  .wrap{max-width:560px;margin:30px auto;padding:0 20px 40px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:28px 32px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:20px;animation:slideUp .4s ease;}
+  .card-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;}
+  .form-group{margin-bottom:16px;}
+  label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+  input{width:100%;padding:11px 15px;border:2px solid var(--border);border-radius:10px;font-size:.93rem;outline:none;transition:border .2s;}
+  input:focus{border-color:var(--primary);}
+  .alert{padding:13px 18px;border-radius:10px;margin-bottom:16px;font-weight:500;border-left:4px solid var(--success);background:#d1fae5;color:#065f46;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>⚙️ Records / OPD Settings</h1>
+  <a href="{{ url_for('records') }}" class="btn btn-back">← Back</a>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}
+<div style="max-width:560px;margin:16px auto;padding:0 20px;">
+{% for cat,msg in messages %}<div class="alert">✅ {{ msg }}</div>{% endfor %}
+</div>
+{% endif %}{% endwith %}
+<div class="wrap">
+  <form method="post">
+    <div class="card">
+      <div class="card-title">💰 Consultation Fees</div>
+      <div class="form-group">
+        <label>Non-Insured Consultation Fee (GHS)</label>
+        <input type="number" step="0.01" min="0" name="consultation_fee_non_insured" value="{{ s.consultation_fee_non_insured if s else 10.0 }}" />
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔢 Number Prefixes</div>
+      <div class="form-group">
+        <label>OPD Number Prefix</label>
+        <input type="text" name="opd_prefix" value="{{ s.opd_prefix if s else 'OPD' }}" placeholder="OPD" />
+      </div>
+      <div class="form-group">
+        <label>Patient ID Prefix</label>
+        <input type="text" name="patient_id_prefix" value="{{ s.patient_id_prefix if s else 'JMH' }}" placeholder="JMH" />
+      </div>
+    </div>
+    <button type="submit" class="btn btn-save">💾 Save Settings</button>
+  </form>
+</div>
+</body>
+</html>

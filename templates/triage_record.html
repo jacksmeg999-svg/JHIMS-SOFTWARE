@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--teal:#0d9488;--radius:14px;}
+.panel{background:#fff;border-radius:var(--radius);padding:22px 28px;box-shadow:0 4px 14px rgba(0,0,0,.08);max-width:800px;margin:0 auto 18px;animation:fadeUp .4s ease;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #ccfbf1;}
+.patient-bar{background:linear-gradient(135deg,#065f46,#0d9488);border-radius:var(--radius);padding:18px 24px;color:#fff;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+.patient-bar .pname{font-size:1.2rem;font-weight:800;}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-group.half{grid-column:span 1;}
+label{font-size:.74rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:border .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--teal);}
+.vital-input{text-align:center;font-size:1.1rem;font-weight:700;}
+.vital-label{font-size:.7rem;color:#64748b;text-align:center;font-weight:600;text-transform:uppercase;margin-top:4px;}
+.btn-submit{background:linear-gradient(135deg,#0d9488,#059669);color:#fff;width:100%;padding:14px;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(13,148,136,.4);}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);text-decoration:none;font-weight:600;font-size:.88rem;}
+.badge{display:inline-block;padding:4px 12px;border-radius:50px;font-size:.75rem;font-weight:700;}
+.badge-nhis{background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.triage-levels{display:flex;gap:10px;margin-top:6px;}
+.tl-opt input[type=radio]{display:none;}
+.tl-opt label{display:block;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:700;font-size:.84rem;border:2px solid #e2e8f0;transition:all .2s;text-transform:none;letter-spacing:0;}
+.tl-normal input:checked+label{background:#d1fae5;border-color:#10b981;color:#065f46;}
+.tl-urgent input:checked+label{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
+.tl-critical input:checked+label{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+</style>
+{% endblock %}
+{% block content %}
+<div style="max-width:800px;margin:0 auto;">
+<div class="patient-bar">
+  <div>
+    <div class="pname">🩺 {{ patient.full_name if patient else 'Patient' }}</div>
+    <div style="opacity:.8;font-size:.85rem;margin-top:4px;">
+      OPD: {{ visit.opd_number }} · {{ patient.sex if patient else '—' }} / {{ patient.age if patient else '—' }}
+      {% if visit.funding=='NHIS' %}<span class="badge badge-nhis">🛡️ NHIS</span>{% endif %}
+    </div>
+  </div>
+  <a href="{{ url_for('triage') }}" class="btn-back">← Triage</a>
+</div>
+
+<div class="panel">
+  <div class="panel-title">📊 Record Vitals</div>
+  <form method="post">
+    <!-- VITALS ROW -->
+    <div class="form-grid">
+      <div class="form-group">
+        <label>🌡️ Temperature (°C)</label>
+        <input type="number" step="0.1" name="temperature" class="vital-input" placeholder="36.5" />
+      </div>
+      <div class="form-group">
+        <label>🫀 BP Systolic (mmHg)</label>
+        <input type="number" name="bp_systolic" class="vital-input" placeholder="120" />
+      </div>
+      <div class="form-group">
+        <label>🫀 BP Diastolic (mmHg)</label>
+        <input type="number" name="bp_diastolic" class="vital-input" placeholder="80" />
+      </div>
+      <div class="form-group">
+        <label>💓 Pulse (bpm)</label>
+        <input type="number" name="pulse" class="vital-input" placeholder="72" />
+      </div>
+      <div class="form-group">
+        <label>🫁 Respiration (bpm)</label>
+        <input type="number" name="respiration" class="vital-input" placeholder="16" />
+      </div>
+      <div class="form-group">
+        <label>💨 O2 Saturation (%)</label>
+        <input type="number" step="0.1" name="oxygen_sat" class="vital-input" placeholder="98" />
+      </div>
+      <div class="form-group">
+        <label>⚖️ Weight (kg)</label>
+        <input type="number" step="0.1" name="weight" class="vital-input" placeholder="70" id="weight-in" oninput="calcBMI()" />
+      </div>
+      <div class="form-group">
+        <label>📏 Height (cm)</label>
+        <input type="number" step="0.1" name="height" class="vital-input" placeholder="170" id="height-in" oninput="calcBMI()" />
+      </div>
+      <div class="form-group">
+        <label>📐 BMI (auto)</label>
+        <input type="text" id="bmi-out" class="vital-input" placeholder="—" readonly style="background:#f8faff;font-weight:800;color:#4f46e5;" />
+      </div>
+    </div>
+
+    <div class="form-group full" style="margin-top:14px;">
+      <label>Chief Complaint</label>
+      <textarea name="chief_complaint" placeholder="Patient's main complaint or reason for visit…" rows="2"></textarea>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label style="display:block;margin-bottom:8px;">Triage Level</label>
+      <div class="triage-levels">
+        <div class="tl-opt tl-normal"><input type="radio" name="triage_level" id="tl-n" value="Normal" checked /><label for="tl-n">✅ Normal</label></div>
+        <div class="tl-opt tl-urgent"><input type="radio" name="triage_level" id="tl-u" value="Urgent" /><label for="tl-u">⚠️ Urgent</label></div>
+        <div class="tl-opt tl-critical"><input type="radio" name="triage_level" id="tl-c" value="Critical" /><label for="tl-c">🚨 Critical</label></div>
+      </div>
+    </div>
+
+    <div class="form-group full" style="margin-top:14px;">
+      <label>Notes</label>
+      <textarea name="notes" placeholder="Additional observations…" rows="2"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">✅ Save Vitals &amp; Send to Doctor</button>
+  </form>
+</div>
+</div>
+
+<script>
+function calcBMI(){
+  const w=parseFloat(document.getElementById('weight-in').value);
+  const h=parseFloat(document.getElementById('height-in').value)/100;
+  if(w>0&&h>0){
+    const bmi=(w/(h*h)).toFixed(1);
+    document.getElementById('bmi-out').value=bmi;
+  }
+}
+</script>
+{% endblock %}

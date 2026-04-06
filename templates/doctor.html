@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--doc:#4f46e5;--radius:14px;}
+.doc-header{background:linear-gradient(135deg,#1e3a8a,#4f46e5,#7c3aed);border-radius:var(--radius);padding:22px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 8px 28px rgba(79,70,229,.35);}
+.doc-header h2{font-size:1.4rem;font-weight:800;margin:0;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;}
+.st-card{border-radius:14px;padding:18px 20px;color:#fff;text-align:center;}
+.st-card .v{font-size:2rem;font-weight:900;}.st-card .l{font-size:.72rem;font-weight:600;text-transform:uppercase;opacity:.85;margin-top:4px;}
+.sc1{background:linear-gradient(135deg,#4f46e5,#7c3aed);}.sc2{background:linear-gradient(135deg,#10b981,#059669);}.sc3{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:18px;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--doc);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #e0e7ff;}
+.queue-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:12px;margin-bottom:10px;border:2px solid #e2e8f0;transition:all .2s;}
+.queue-item:hover{border-color:#4f46e5;box-shadow:0 4px 14px rgba(79,70,229,.15);}
+.qi-name{font-weight:700;font-size:.95rem;}
+.qi-meta{font-size:.78rem;color:#64748b;margin-top:3px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-nhis{background:#ede9fe;color:#7c3aed;}.badge-nonins{background:#fee2e2;color:#dc2626;}
+.badge-open{background:#dbeafe;color:#1d4ed8;}.badge-done{background:#d1fae5;color:#059669;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:50px;border:none;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-doc{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;}
+.btn-info{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#1e3a8a,#4f46e5);}
+thead th{color:#fff;padding:10px 12px;font-size:.75rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;}
+tbody tr:hover{background:#f8f7ff;}
+tbody td{padding:9px 12px;font-size:.83rem;}
+.empty{text-align:center;padding:40px;color:#64748b;font-size:.88rem;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:none;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .queue-item{border-color:rgba(148,163,184,.2);background:rgba(15,23,42,.5);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="doc-header" style="animation:fadeDown .5s ease;">
+  <div><h2>👨‍⚕️ Doctor's Station</h2><p style="opacity:.8;margin:4px 0 0;font-size:.85rem;">{{ HOSPITAL_NAME }} · {{ today }}</p></div>
+  <div style="text-align:right;">
+    <div style="font-size:1.8rem;font-weight:900;" id="doc-clock">--:--:--</div>
+    <div style="font-size:.8rem;opacity:.8;">{{ today_count }} consultations today</div>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="st-card sc1"><div class="v">{{ waiting|length }}</div><div class="l">⏳ Waiting</div></div>
+  <div class="st-card sc2"><div class="v">{{ today_count }}</div><div class="l">✅ Seen Today</div></div>
+  <div class="st-card sc3"><div class="v">{{ consultations|selectattr('status','equalto','Open')|list|length }}</div><div class="l">📋 Open Cases</div></div>
+</div>
+
+<!-- WAITING -->
+<div class="panel" style="animation:fadeUp .4s ease;">
+  <div class="panel-title">⏳ Patients Waiting ({{ waiting|length }})
+    <button onclick="location.reload()" style="background:#f8f7ff;border:1px solid #4f46e5;padding:5px 12px;border-radius:50px;color:#4f46e5;cursor:pointer;font-size:.78rem;margin-left:auto;">🔄 Refresh</button>
+  </div>
+  {% if waiting %}
+    {% for v in waiting %}
+    <div class="queue-item">
+      <div>
+        <div class="qi-name">{{ v.full_name }}</div>
+        <div class="qi-meta">
+          OPD: {{ v.opd_number }} · {{ v.sex or '—' }} / {{ v.age or '—' }}
+          {% if v.funding=='NHIS' %}<span class="badge badge-nhis">NHIS</span>{% else %}<span class="badge badge-nonins">Non-Ins.</span>{% endif %}
+          · NHIS: {{ v.nhis_number or '—' }}
+        </div>
+      </div>
+      <a href="{{ url_for('doctor_consult', visit_id=v.id) }}" class="btn btn-doc">👨‍⚕️ Consult</a>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">✅ No patients waiting.</div>
+  {% endif %}
+</div>
+
+<!-- TODAY'S CONSULTATIONS -->
+{% if consultations %}
+<div class="panel" style="animation:fadeUp .5s ease;">
+  <div class="panel-title">📋 Today's Consultations</div>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>#</th><th>Patient</th><th>OPD</th><th>Diagnosis</th><th>Lab Req.</th><th>Rx</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for c in consultations %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ c.patient_name }}</strong></td>
+        <td>{{ c.opd_number }}</td>
+        <td>{{ (c.diagnosis or '—')[:30] }}</td>
+        <td>{{ '✅' if c.treatment_plan and 'lab' in c.treatment_plan.lower() else '—' }}</td>
+        <td>{{ '✅' if c.treatment_plan and 'rx' in c.treatment_plan.lower() else '—' }}</td>
+        <td><span class="badge {% if c.status=='Open' %}badge-open{% else %}badge-done{% endif %}">{{ c.status }}</span></td>
+        <td><a href="{{ url_for('doctor_view_consult', cid=c.id) }}" class="btn btn-info" style="padding:5px 12px;font-size:.76rem;">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function tick(){const n=new Date();const p=x=>String(x).padStart(2,'0');document.getElementById('doc-clock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;}
+setInterval(tick,1000);tick();
+setInterval(()=>location.reload(),30000);
+</script>
+{% endblock %}

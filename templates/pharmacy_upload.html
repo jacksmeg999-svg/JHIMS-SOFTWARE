@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--pharm:#7c3aed;--radius:14px;}
+.wrap{max-width:680px;margin:0 auto;}
+.header-bar{background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.panel{background:#fff;border-radius:var(--radius);padding:22px 26px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--pharm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ede9fe;}
+.upload-zone{border:3px dashed #a78bfa;border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#faf5ff;}
+.upload-zone:hover{border-color:#7c3aed;background:#f3e8ff;}
+.upload-zone .ico{font-size:3rem;display:block;margin-bottom:12px;}
+.upload-zone .title{font-size:1rem;font-weight:700;color:#7c3aed;}
+.upload-zone .sub{font-size:.82rem;color:#64748b;margin-top:6px;}
+.btn-submit{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;width:100%;padding:13px;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;}
+.btn-submit:hover{transform:translateY(-2px);}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);text-decoration:none;font-weight:600;font-size:.88rem;}
+.format-box{background:#ede9fe;border-radius:12px;padding:14px 18px;font-size:.82rem;color:#4c1d95;}
+.format-box strong{display:block;margin-bottom:6px;}
+.format-box code{background:#ddd6fe;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.82rem;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+<div class="header-bar">
+  <div><h2 style="margin:0;font-size:1.2rem;font-weight:800;">📤 Upload Drug List</h2>
+  <p style="opacity:.8;margin:3px 0 0;font-size:.82rem;">Import drugs from Excel or CSV</p></div>
+  <a href="{{ url_for('pharmacy_drugs') }}" class="btn-back">← Drug Store</a>
+</div>
+
+<div class="panel">
+  <div class="panel-title">📋 Expected File Format</div>
+  <div class="format-box">
+    <strong>Your Excel/CSV file should have these column headers (row 1):</strong>
+    <code>drug_name</code> · <code>generic_name</code> · <code>category</code> · <code>unit</code> · <code>unit_price</code> · <code>stock_qty</code> · <code>reorder_level</code>
+    <div style="margin-top:8px;color:#6d28d9;">Only <strong>drug_name</strong> is required. All others are optional.</div>
+    <div style="margin-top:6px;color:#6d28d9;">Duplicate drug names will be skipped. Existing records won't be overwritten.</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">📁 Upload File</div>
+  <form method="post" enctype="multipart/form-data">
+    <label style="cursor:pointer;">
+      <div class="upload-zone" id="drop-zone" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+        <span class="ico">📊</span>
+        <div class="title">Click to select or drag & drop</div>
+        <div class="sub">Supports .xlsx, .xls, .csv</div>
+        <div id="file-name" style="margin-top:10px;font-weight:700;color:#7c3aed;font-size:.85rem;"></div>
+      </div>
+      <input type="file" name="drug_file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="showFileName(this)" id="file-input" required />
+    </label>
+    <button type="submit" class="btn-submit">📤 Import Drugs</button>
+  </form>
+</div>
+</div>
+
+<script>
+function showFileName(input){
+  const name=input.files[0]?.name||'';
+  document.getElementById('file-name').textContent=name?'Selected: '+name:'';
+}
+function handleDrop(e){
+  e.preventDefault();
+  const file=e.dataTransfer.files[0];
+  if(file){
+    const dt=new DataTransfer(); dt.items.add(file);
+    document.getElementById('file-input').files=dt.files;
+    document.getElementById('file-name').textContent='Selected: '+file.name;
+  }
+}
+</script>
+{% endblock %}

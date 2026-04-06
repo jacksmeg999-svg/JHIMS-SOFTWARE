@@ -1,244 +1,300 @@
 {% extends "base.html" %}
 {% block extra_head %}
-<script>
-  // ===== Investigation popup (Lab selection inside Cashier) =====
-  let invTests = [];
-  let invInsured = false;
-
-  function inv_openModal(){
-    document.getElementById('inv-modal').style.display = 'flex';
-    inv_clearSelection();
-  }
-
-  function inv_closeModal(){
-    document.getElementById('inv-modal').style.display = 'none';
-  }
-
-  function inv_onServiceChange(sel){
-    if(sel.value === 'INVESTIGATION'){
-      inv_openModal();
-    }
-  }
-
-  function inv_toggleTest(cb, ins, nonIns){
-    invInsured = document.querySelector('input[name="inv_insured"]:checked').value === 'Insured';
-    const price = invInsured ? ins : nonIns;
-    const name = cb.dataset.name;
-    if(cb.checked){
-      invTests.push({name:name, price:price});
-    }else{
-      invTests = invTests.filter(t => t.name !== name);
-    }
-    inv_updateTotal();
-  }
-
-  function inv_refreshPrices(){
-    invInsured = document.querySelector('input[name="inv_insured"]:checked').value === 'Insured';
-    const rows = document.querySelectorAll('#inv-tests-table tr[data-ins][data-non]');
-    rows.forEach(function(row){
-      const ins = parseFloat(row.dataset.ins);
-      const nonIns = parseFloat(row.dataset.non);
-      row.querySelector('.inv-price').textContent = (invInsured ? ins : nonIns).toFixed(2);
-    });
-    // update selected tests prices too
-    invTests.forEach(function(t){
-      const row = Array.from(rows).find(r => r.dataset.test === t.name);
-      if(row){
-        const ins = parseFloat(row.dataset.ins);
-        const nonIns = parseFloat(row.dataset.non);
-        t.price = invInsured ? ins : nonIns;
-      }
-    });
-    inv_updateTotal();
-  }
-
-  function inv_updateTotal(){
-    let total = 0;
-    invTests.forEach(t => total += t.price);
-    document.getElementById('inv-total').textContent = "Total: GHS " + total.toFixed(2);
-  }
-
-  function inv_clearSelection(){
-    invTests = [];
-    document.querySelectorAll('.inv-test-cb').forEach(cb => cb.checked = false);
-    document.getElementById('inv-total').textContent = "Total: GHS 0.00";
-  }
-
-  function inv_applyToCashier(){
-    let total = 0;
-    invTests.forEach(t => total += t.price);
-    const amtInput = document.querySelector('input[name="amount_paid"]');
-    const detailsInput = document.querySelector('textarea[name="details"]');
-    if(amtInput){
-      amtInput.value = total.toFixed(2);
-    }
-    if(detailsInput){
-      let lines = ["INVESTIGATION LAB TESTS:"];
-      invTests.forEach(t => {
-        lines.push(" - " + t.name + " : GHS " + t.price.toFixed(2));
-      });
-      lines.push("TOTAL: GHS " + total.toFixed(2));
-      if(detailsInput.value.trim()){
-        detailsInput.value = detailsInput.value + "\n\n" + lines.join("\n");
-      }else{
-        detailsInput.value = lines.join("\n");
-      }
-    }
-    inv_closeModal();
-  }
-</script>
+<style>
+:root{--cash:#0d9488;--indigo:#4f46e5;--radius:14px;}
+.cash-header{background:linear-gradient(135deg,#065f46,#0d9488,#06b6d4);border-radius:var(--radius);padding:20px 26px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;box-shadow:0 8px 24px rgba(13,148,136,.3);}
+.cash-header h2{font-size:1.3rem;font-weight:800;margin:0;}
+.lookup-bar{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #10b981;border-radius:14px;padding:16px 20px;margin-bottom:18px;}
+.lookup-bar .lb-title{font-size:.78rem;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+.lookup-row{display:flex;gap:10px;flex-wrap:wrap;}
+.lookup-row input{flex:1;min-width:200px;padding:10px 16px;border:2px solid #6ee7b7;border-radius:50px;font-size:.9rem;outline:none;background:#fff;transition:border .2s;}
+.lookup-row input:focus{border-color:#0d9488;}
+.btn-load{padding:10px 22px;border-radius:50px;border:none;background:linear-gradient(135deg,#0d9488,#059669);color:#fff;font-weight:700;cursor:pointer;font-size:.9rem;transition:all .2s;}
+.btn-load:hover{transform:translateY(-2px);}
+.lookup-result{margin-top:10px;padding:10px 14px;border-radius:10px;font-size:.84rem;font-weight:600;display:none;}
+.lr-success{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.lr-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:800px){.card-grid{grid-template-columns:1fr;}}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);}
+.panel-title{font-size:.82rem;font-weight:700;color:var(--cash);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #ccfbf1;display:flex;align-items:center;gap:8px;}
+label{display:block;font-size:.74rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.88rem;outline:none;transition:border .2s;background:#fff;}
+input:focus,select:focus,textarea:focus{border-color:var(--cash);}
+textarea{min-height:60px;resize:vertical;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+.form-row.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{margin-bottom:10px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;border:none;font-size:.86rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:linear-gradient(135deg,#0d9488,#059669);color:#fff;}
+.btn-secondary{background:#f1f5f9;color:#1e293b;border:1px solid #e2e8f0;box-shadow:none;}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;}
+.btn-indigo{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;}
+.btn-amber{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.inv-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:10px;border:2px solid #e2e8f0;margin-bottom:8px;transition:all .2s;cursor:pointer;}
+.inv-item:hover{border-color:#0d9488;background:#f0fdf4;}
+.inv-item .inv-no{font-weight:700;font-size:.88rem;}
+.inv-item .inv-meta{font-size:.74rem;color:#64748b;margin-top:2px;}
+.inv-item .inv-amt{font-size:1rem;font-weight:800;color:#0d9488;}
+.badge{display:inline-block;padding:2px 9px;border-radius:50px;font-size:.7rem;font-weight:700;}
+.badge-lab{background:#cffafe;color:#155e75;}.badge-pharmacy{background:#fce7f3;color:#9d174d;}
+.badge-manual{background:#fef3c7;color:#92400e;}.badge-mortuary{background:#f1f5f9;color:#475569;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#065f46,#0d9488);}
+thead th{color:#fff;padding:10px 12px;font-size:.74rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;}
+tbody tr:hover{background:#f0fdf4;}
+tbody td{padding:9px 12px;font-size:.82rem;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);align-items:center;justify-content:center;z-index:1000;}
+.modal-box{background:#fff;border-radius:16px;max-width:820px;width:95%;max-height:90vh;padding:20px;box-shadow:0 16px 40px rgba(0,0,0,.25);overflow:auto;}
+.countdown-bar{background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:6px 14px;font-size:.76rem;color:#92400e;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+body.theme-luxury .inv-item{border-color:rgba(148,163,184,.2);background:rgba(15,23,42,.5);}
+</style>
 {% endblock %}
+
 {% block content %}
-<style>.cashier-grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px;align-items:flex-end;}</style>
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;">
-    <h2 style="margin:0;">Cashier - Receipts</h2>
-    <div class="no-print">
-      <button class="btn btn-secondary" type="button" onclick="location.reload()">Refresh</button>
-    </div>
+<div class="cash-header no-print">
+  <div>
+    <h2>💰 Cashier — {{ HOSPITAL_NAME }}</h2>
+    <p style="opacity:.8;margin:3px 0 0;font-size:.82rem;">Receipts, Invoice Payments &amp; Billing</p>
   </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="{{ url_for('cashier_pending_invoices') }}" class="btn btn-amber">📋 Pending Invoices</a>
+    <a href="{{ url_for('cashier_new_invoice') }}" class="btn btn-indigo">➕ New Invoice</a>
+    <button onclick="location.reload()" class="btn btn-secondary">🔄 Refresh</button>
+  </div>
+</div>
 
-  <form method="get" class="no-print" style="margin-top:8px;margin-bottom:8px;">
-    <div class="row">
-      <div class="col">
-        <label>Load from Lab / Mortuary by Patient ID</label>
-        <input type="text" name="load_pid" value="{{ request.args.get('load_pid','') }}">
-      </div>
-      <div>
-        <label>&nbsp;</label><br>
-        <button class="btn btn-secondary" type="submit">Load</button>
-      </div>
-    </div>
-  </form>
+<div class="no-print countdown-bar">
+  ⏳ <strong><span id="pending-count">—</span> pending invoices</strong>
+  &nbsp;·&nbsp; <span id="inv-countdown">Refreshing in 5s</span>
+  <a href="{{ url_for('cashier_pending_invoices') }}" style="margin-left:auto;color:#92400e;font-weight:700;text-decoration:none;">View All →</a>
+</div>
 
-  <form method="post" class="no-print">
-    <div class="cashier-grid">
-    <div class="row">
-      <div class="col">
-        <label>Patient ID</label>
-        <input type="text" name="patient_id" value="{{ prefill.patient_id if prefill else '' }}">
+<!-- UNIVERSAL LOOKUP -->
+<div class="lookup-bar no-print">
+  <div class="lb-title">🔍 Universal Lookup — Patient ID / OPD No. / Corpse ID / Invoice No.</div>
+  <div class="lookup-row">
+    <input type="text" id="universal-id" placeholder="e.g. JMH000001 · OPD/000001 · C0001 · INV000001 · RX000001" onkeydown="if(event.key==='Enter')doLookup()" />
+    <button class="btn-load" onclick="doLookup()">🔍 Load</button>
+  </div>
+  <div class="lookup-result" id="lookup-result"></div>
+</div>
+
+<div class="card-grid no-print">
+  <!-- RECEIPT FORM -->
+  <div class="panel">
+    <div class="panel-title">🧾 Issue Receipt</div>
+    <form method="post" id="receipt-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Patient ID / OPD No.</label>
+          <input type="text" name="patient_id" id="f-pid" value="{{ prefill.patient_id if prefill else '' }}" placeholder="Auto-filled" />
+        </div>
+        <div class="form-group">
+          <label>Patient Name *</label>
+          <input type="text" name="patient_name" id="f-name" required value="{{ prefill.patient_name if prefill else '' }}" />
+        </div>
       </div>
-      <div class="col">
-        <label>Patient Name</label>
-        <input type="text" name="patient_name" required value="{{ prefill.patient_name if prefill else '' }}">
-      </div>
-    </div>
-    <div class="row">
-      <div class="col">
-        <label>Service Received</label>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <select name="service_received" required onchange="inv_onServiceChange(this)">
-            <option value="">-- select --</option>
+      <div class="form-group">
+        <label>Service *</label>
+        <div style="display:flex;gap:8px;">
+          <select name="service_received" id="f-service" required onchange="inv_onServiceChange(this)">
+            <option value="">-- Select --</option>
             {% for s in SERVICES %}
             <option value="{{ s }}" {% if prefill and prefill.service_received==s %}selected{% endif %}>{{ s }}</option>
             {% endfor %}
           </select>
-          <button class="btn btn-secondary" type="button" onclick="inv_openModal()">Investigation tests</button>
+          <button class="btn btn-secondary" type="button" onclick="inv_openModal()" style="white-space:nowrap;">🔬 Lab Tests</button>
         </div>
       </div>
-      <div class="col">
-        <label>Amount Paid (GHS)</label>
-        <input type="number" step="0.01" name="amount_paid" required value="{{ prefill.amount_paid if prefill else '' }}">
+      <div class="form-row three">
+        <div class="form-group">
+          <label>Amount (GHS) *</label>
+          <input type="number" step="0.01" name="amount_paid" id="f-amount" required value="{{ prefill.amount_paid if prefill else '' }}" style="font-size:1rem;font-weight:700;" />
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select name="payment_method">
+            <option>Cash</option><option>Mobile Money</option>
+            <option>Card</option><option>Bank Transfer</option><option>NHIS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Invoice Ref.</label>
+          <input type="text" name="invoice_ref" id="f-inv" placeholder="e.g. INV000001" />
+        </div>
       </div>
-      <div class="col">
-        <label>Payment Method</label>
-        <select name="payment_method">
-          <option>Cash</option>
-          <option>Mobile Money</option>
-          <option>Card</option>
-          <option>Bank Transfer</option>
-        </select>
+      <div class="form-group">
+        <label>Details / Notes</label>
+        <textarea name="details" id="f-details">{{ prefill.details if prefill else '' }}</textarea>
       </div>
-    </div>
-    </div>
-    <div>
-      <label>Details (lab / mortuary notes etc.)</label>
-      <textarea name="details">{{ prefill.details if prefill else '' }}</textarea>
-    </div>
-    <div style="margin-top:8px;">
-      <button class="btn btn-primary" type="submit">Save &amp; Print</button>
-      <button class="btn btn-secondary" type="reset">Clear form</button>
-    </div>
-  </form>
-</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-primary" type="submit" style="flex:2;justify-content:center;padding:12px;">💾 Save &amp; Print Receipt</button>
+        <button class="btn btn-secondary" type="reset" style="flex:1;" onclick="clearLookup()">Clear</button>
+      </div>
+    </form>
+  </div>
 
-<!-- Investigation selection popup -->
-<div id="inv-modal" class="no-print" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.4);align-items:center;justify-content:center;z-index:1000;">
-  <div style="background:#fff;border-radius:10px;max-width:800px;width:95%;max-height:90vh;padding:12px;box-shadow:0 10px 25px rgba(15,23,42,0.3);overflow:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <h3 style="margin:0;">Select Lab Tests for INVESTIGATION</h3>
-      <button class="btn btn-secondary" type="button" onclick="inv_closeModal()">Close</button>
+  <!-- LIVE PENDING INVOICES -->
+  <div class="panel">
+    <div class="panel-title">⏳ Pending Invoices <span id="inv-badge" style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:50px;font-size:.7rem;">loading…</span></div>
+    <div id="pending-inv-list" style="max-height:400px;overflow-y:auto;">
+      <div style="text-align:center;padding:20px;color:#64748b;font-size:.82rem;">Loading…</div>
     </div>
-    <div style="margin-bottom:4px;">
-      <label>Price type:</label>
-      <label><input type="radio" name="inv_insured" value="Insured" onchange="inv_refreshPrices()"> Insured</label>
-      <label style="margin-left:8px;"><input type="radio" name="inv_insured" value="Non-insured" checked onchange="inv_refreshPrices()"> Non-insured</label>
-    </div>
-    <div style="max-height:300px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;">
-      <table id="inv-tests-table">
-        <thead>
-          <tr><th></th><th>Lab Test</th><th>Price (current)</th><th>Insured</th><th>Non-insured</th></tr>
-        </thead>
-        <tbody>
-          {% for t in LAB_TESTS %}
-          <tr data-test="{{ t.name }}" data-ins="{{ t.insured_price }}" data-non="{{ t.non_insured_price }}">
-            <td><input type="checkbox" class="inv-test-cb" data-name="{{ t.name }}" onchange="inv_toggleTest(this, {{ t.insured_price }}, {{ t.non_insured_price }})"></td>
-            <td>{{ t.name }}</td>
-            <td class="inv-price">{{ '%.2f'|format(t.non_insured_price) }}</td>
-            <td>{{ '%.2f'|format(t.insured_price) }}</td>
-            <td>{{ '%.2f'|format(t.non_insured_price) }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <p id="inv-total" style="margin-top:6px;"><strong>Total: GHS 0.00</strong></p>
-    <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end;">
-      <button class="btn btn-secondary" type="button" onclick="inv_clearSelection()">Clear selection</button>
-      <button class="btn btn-primary" type="button" onclick="inv_applyToCashier()">Use in Cashier form</button>
-    </div>
+    <a href="{{ url_for('cashier_pending_invoices') }}" class="btn btn-amber" style="width:100%;justify-content:center;margin-top:10px;">📋 All Pending Invoices</a>
   </div>
 </div>
 
-<div class="card no-print">
-  <h3>Recent Receipts</h3>
-  <form method="get" style="margin-bottom:6px;">
-    <div class="row">
-      <div class="col">
-        <input type="text" name="q" placeholder="Search name / receipt / patient ID..." value="{{ q }}">
-      </div>
-      <div><button class="btn btn-secondary" type="submit">Search</button></div>
-    </div>
+<!-- RECENT RECEIPTS TABLE -->
+<div class="panel no-print">
+  <div class="panel-title">📄 Recent Receipts</div>
+  <form method="get" style="display:flex;gap:8px;margin-bottom:12px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search name, receipt no., patient ID…" style="flex:1;" />
+    <button type="submit" class="btn btn-primary">🔍 Search</button>
+    {% if q %}<a href="{{ url_for('cashier') }}" class="btn btn-secondary">Clear</a>{% endif %}
   </form>
+  <div style="overflow-x:auto;">
   <table>
-    <thead>
-      <tr>
-        <th>ID</th><th>Date</th><th>Receipt #</th><th>Patient ID</th><th>Patient</th><th>Service</th><th>Amount</th><th>Cashier</th><th>Actions</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Date</th><th>Receipt #</th><th>Patient ID</th><th>Patient</th><th>Service</th><th>Amount</th><th>Method</th><th>Cashier</th><th>Actions</th></tr></thead>
     <tbody>
       {% for r in rows %}
       <tr>
-        <td>{{ r.id }}</td>
         <td>{{ r.date }}</td>
-        <td>{{ r.receipt_number }}</td>
+        <td><strong>{{ r.receipt_number }}</strong></td>
         <td>{{ r.patient_id }}</td>
         <td>{{ r.patient_name }}</td>
         <td>{{ r.service_received }}</td>
-        <td>{{ '%.2f'|format(r.amount_paid or 0) }}</td>
+        <td style="font-weight:700;color:#0d9488;">GHS {{ '%.2f'|format(r.amount_paid or 0) }}</td>
+        <td>{{ r.payment_method or '—' }}</td>
         <td>{{ r.cashier_name }}</td>
         <td>
-          <a class="btn btn-secondary" href="{{ url_for('receipt_view', rec_id=r.id) }}" target="_blank">Print</a>
-          {% if session.get('role') == 'Admin' %}
-          <a class="btn btn-secondary" href="{{ url_for('edit_receipt', rec_id=r.id) }}">Edit</a>
-          <form method="post" action="{{ url_for('delete_receipt', rec_id=r.id) }}" style="display:inline;">
-            <button class="btn btn-danger" type="submit" onclick="return confirm('Delete receipt?')">Del</button>
-          </form>
-          {% endif %}
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <a class="btn btn-secondary" style="padding:5px 10px;font-size:.74rem;" href="{{ url_for('receipt_view', rec_id=r.id) }}" target="_blank">🖨️ A4</a>
+            <a class="btn btn-secondary" style="padding:5px 10px;font-size:.74rem;" href="{{ url_for('receipt_view', rec_id=r.id) }}?size=pos" target="_blank">🧾 POS</a>
+            <a class="btn btn-secondary" style="padding:5px 10px;font-size:.74rem;" href="{{ url_for('receipt_view', rec_id=r.id) }}?size=a6" target="_blank">📄 A6</a>
+            {% if session.get('role')=='Admin' %}
+            <a class="btn btn-secondary" style="padding:5px 10px;font-size:.74rem;" href="{{ url_for('edit_receipt', rec_id=r.id) }}">✏️</a>
+            <form method="post" action="{{ url_for('delete_receipt', rec_id=r.id) }}" style="display:inline;">
+              <button class="btn btn-danger" style="padding:5px 10px;font-size:.74rem;" type="submit" onclick="return confirm('Delete?')">🗑️</button>
+            </form>
+            {% endif %}
+          </div>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
+
+<!-- LAB MODAL -->
+<div id="inv-modal" class="modal-overlay no-print">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;">🔬 Select Lab Tests</h3>
+      <button class="btn btn-secondary" onclick="inv_closeModal()">✕</button>
+    </div>
+    <div style="margin-bottom:10px;display:flex;gap:16px;align-items:center;font-size:.88rem;">
+      <strong>Price:</strong>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.85rem;text-transform:none;letter-spacing:0;"><input type="radio" name="inv_insured" value="Insured" onchange="inv_refreshPrices()"> Insured</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.85rem;text-transform:none;letter-spacing:0;"><input type="radio" name="inv_insured" value="Non-insured" checked onchange="inv_refreshPrices()"> Non-insured</label>
+    </div>
+    <div style="max-height:320px;overflow:auto;border:2px solid #e2e8f0;border-radius:10px;">
+      <table id="inv-tests-table">
+        <thead style="position:sticky;top:0;"><tr style="background:#0d9488;color:#fff;">
+          <th style="padding:8px;width:40px;"></th>
+          <th style="padding:8px;text-align:left;">Test</th>
+          <th style="padding:8px;text-align:right;">Price</th>
+          <th style="padding:8px;text-align:right;">Insured</th>
+          <th style="padding:8px;text-align:right;">Non-Ins.</th>
+        </tr></thead>
+        <tbody>
+          {% for t in LAB_TESTS %}
+          <tr data-test="{{ t.name }}" data-ins="{{ t.insured_price }}" data-non="{{ t.non_insured_price }}" style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:7px;text-align:center;"><input type="checkbox" class="inv-test-cb" data-name="{{ t.name }}" onchange="inv_toggleTest(this,{{ t.insured_price }},{{ t.non_insured_price }})" style="width:auto;"></td>
+            <td style="padding:7px;">{{ t.name }}</td>
+            <td style="padding:7px;text-align:right;font-weight:700;" class="inv-price">{{ '%.2f'|format(t.non_insured_price) }}</td>
+            <td style="padding:7px;text-align:right;color:#7c3aed;">{{ '%.2f'|format(t.insured_price) }}</td>
+            <td style="padding:7px;text-align:right;color:#dc2626;">{{ '%.2f'|format(t.non_insured_price) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+      <p id="inv-total" style="font-size:1.1rem;font-weight:800;color:#0d9488;margin:0;">Total: GHS 0.00</p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="inv_clearSelection()">Clear</button>
+        <button class="btn btn-primary" onclick="inv_applyToCashier()">✅ Apply to Receipt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let invTests=[];
+function inv_openModal(){document.getElementById('inv-modal').style.display='flex';inv_clearSelection();}
+function inv_closeModal(){document.getElementById('inv-modal').style.display='none';}
+function inv_onServiceChange(sel){if(sel.value==='INVESTIGATION')inv_openModal();}
+function inv_toggleTest(cb,ins,nonIns){
+  const insured=document.querySelector('input[name="inv_insured"]:checked').value==='Insured';
+  const price=insured?ins:nonIns, name=cb.dataset.name;
+  if(cb.checked) invTests.push({name,price});
+  else invTests=invTests.filter(t=>t.name!==name);
+  inv_updateTotal();
+}
+function inv_refreshPrices(){
+  const ins=document.querySelector('input[name="inv_insured"]:checked').value==='Insured';
+  document.querySelectorAll('#inv-tests-table tr[data-ins]').forEach(r=>{
+    r.querySelector('.inv-price').textContent=(ins?parseFloat(r.dataset.ins):parseFloat(r.dataset.non)).toFixed(2);
+  });
+  inv_updateTotal();
+}
+function inv_updateTotal(){let t=0;invTests.forEach(x=>t+=x.price);document.getElementById('inv-total').textContent='Total: GHS '+t.toFixed(2);}
+function inv_clearSelection(){invTests=[];document.querySelectorAll('.inv-test-cb').forEach(c=>c.checked=false);inv_updateTotal();}
+function inv_applyToCashier(){
+  let total=0; invTests.forEach(t=>total+=t.price);
+  document.getElementById('f-amount').value=total.toFixed(2);
+  document.getElementById('f-service').value='INVESTIGATION';
+  let lines=['INVESTIGATION LAB TESTS:']; invTests.forEach(t=>lines.push(' - '+t.name+' : GHS '+t.price.toFixed(2))); lines.push('TOTAL: GHS '+total.toFixed(2));
+  const d=document.getElementById('f-details'); d.value=(d.value.trim()?d.value+'\n\n':'')+lines.join('\n');
+  inv_closeModal();
+}
+function doLookup(){
+  const q=document.getElementById('universal-id').value.trim();
+  if(!q){alert('Enter an ID');return;}
+  const res=document.getElementById('lookup-result');
+  res.style.display='block'; res.className='lookup-result lr-success'; res.textContent='Searching…';
+  fetch('/api/lookup?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+    if(d.found){
+      document.getElementById('f-pid').value=d.patient_id||q;
+      document.getElementById('f-name').value=d.name||'';
+      if(d.invoice){document.getElementById('f-amount').value=d.invoice.total_amount;document.getElementById('f-inv').value=d.invoice.invoice_no;document.getElementById('f-details').value='Invoice: '+d.invoice.invoice_no;}
+      res.className='lookup-result lr-success';
+      res.textContent='✅ '+d.name+(d.opd_number?' — OPD: '+d.opd_number:'')+(d.funding?' — '+d.funding:'');
+    } else {
+      res.className='lookup-result lr-error'; res.textContent='⚠️ Not found. Fill manually.';
+    }
+  }).catch(()=>{res.className='lookup-result lr-error';res.textContent='Connection error.';});
+}
+function clearLookup(){document.getElementById('lookup-result').style.display='none';document.getElementById('universal-id').value='';}
+function loadPending(){
+  fetch('/api/pending-invoices').then(r=>r.json()).then(data=>{
+    const invs=data.invoices||[];
+    document.getElementById('inv-badge').textContent=invs.length+' pending';
+    document.getElementById('pending-count').textContent=invs.length;
+    const list=document.getElementById('pending-inv-list');
+    if(!invs.length){list.innerHTML='<div style="text-align:center;padding:30px;color:#64748b;font-size:.82rem;">✅ No pending invoices</div>';return;}
+    list.innerHTML=invs.slice(0,10).map(inv=>`<div class="inv-item" onclick="window.location='/cashier/invoice/${inv.invoice_no}'"><div><div class="inv-no">${inv.invoice_no} <span class="badge badge-${(inv.invoice_type||'').toLowerCase()}">${inv.invoice_type}</span></div><div class="inv-meta">${inv.patient_name||'—'} · ${(inv.created_at||'').slice(0,16)}</div></div><div style="text-align:right;"><div class="inv-amt">GHS ${parseFloat(inv.total_amount||0).toFixed(2)}</div><div style="font-size:.7rem;color:#0d9488;">Click to pay →</div></div></div>`).join('');
+  }).catch(()=>{});
+}
+let cd=5;
+setInterval(()=>{cd--;const el=document.getElementById('inv-countdown');if(cd<=0){cd=5;loadPending();}if(el)el.textContent='Refreshing in '+cd+'s';},1000);
+loadPending();
+</script>
 {% endblock %}

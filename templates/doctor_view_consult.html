@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--doc:#4f46e5;--radius:14px;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.82rem;font-weight:700;color:var(--doc);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e0e7ff;}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:.86rem;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:#64748b;}.info-row .v{font-weight:700;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-open{background:#dbeafe;color:#1d4ed8;}.badge-done{background:#d1fae5;color:#059669;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:50px;border:none;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-back{background:#f1f5f9;color:#1e293b;}
+.btn-doc{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+thead th{background:linear-gradient(135deg,#1e3a8a,#4f46e5);color:#fff;padding:9px 11px;text-align:left;font-size:.74rem;font-weight:600;text-transform:uppercase;}
+tbody td{padding:9px 11px;border-bottom:1px solid #f1f5f9;}
+.vitals-bar{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #10b981;border-radius:12px;padding:12px 16px;display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+.vb-item .vv{font-size:1rem;font-weight:800;color:#065f46;}.vb-item .vl{font-size:.66rem;color:#059669;font-weight:600;text-transform:uppercase;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+  <h2 style="margin:0;font-size:1.2rem;font-weight:800;">📋 Consultation — {{ consult.patient_name }}</h2>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('doctor') }}" class="btn btn-back">← Doctor</a>
+  </div>
+</div>
+
+{% if vitals %}
+<div class="vitals-bar">
+  {% if vitals.temperature %}<div class="vb-item"><div class="vv">{{ vitals.temperature }}°C</div><div class="vl">Temp</div></div>{% endif %}
+  {% if vitals.bp_systolic %}<div class="vb-item"><div class="vv">{{ vitals.bp_systolic }}/{{ vitals.bp_diastolic }}</div><div class="vl">BP</div></div>{% endif %}
+  {% if vitals.pulse %}<div class="vb-item"><div class="vv">{{ vitals.pulse }}</div><div class="vl">Pulse</div></div>{% endif %}
+  {% if vitals.oxygen_sat %}<div class="vb-item"><div class="vv">{{ vitals.oxygen_sat }}%</div><div class="vl">O₂ Sat</div></div>{% endif %}
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+<div>
+  <div class="panel">
+    <div class="panel-title">📋 Clinical Notes</div>
+    <div class="info-row"><span class="k">Date</span><span class="v">{{ consult.consult_date }}</span></div>
+    <div class="info-row"><span class="k">Doctor</span><span class="v">{{ consult.doctor_name }}</span></div>
+    <div class="info-row"><span class="k">Complaint</span><span class="v">{{ consult.chief_complaint or '—' }}</span></div>
+    <div class="info-row"><span class="k">Diagnosis</span><span class="v" style="color:#4f46e5;">{{ consult.diagnosis or '—' }}</span></div>
+    <div class="info-row"><span class="k">Status</span><span class="v"><span class="badge {% if consult.status=='Open' %}badge-open{% else %}badge-done{% endif %}">{{ consult.status }}</span></span></div>
+    {% if consult.follow_up_date %}<div class="info-row"><span class="k">Follow-up</span><span class="v">{{ consult.follow_up_date }}</span></div>{% endif %}
+  </div>
+  {% if consult.history %}
+  <div class="panel"><div class="panel-title">History</div><p style="font-size:.86rem;line-height:1.6;">{{ consult.history }}</p></div>
+  {% endif %}
+  {% if consult.examination %}
+  <div class="panel"><div class="panel-title">Examination</div><p style="font-size:.86rem;line-height:1.6;">{{ consult.examination }}</p></div>
+  {% endif %}
+  {% if consult.treatment_plan %}
+  <div class="panel"><div class="panel-title">Treatment Plan</div><p style="font-size:.86rem;line-height:1.6;">{{ consult.treatment_plan }}</p></div>
+  {% endif %}
+</div>
+<div>
+  <!-- LAB REQUESTS -->
+  {% if lab_reqs %}
+  <div class="panel">
+    <div class="panel-title">🔬 Lab Requests</div>
+    {% for lr in lab_reqs %}
+    <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.83rem;">
+      <strong>{{ lr.status }}</strong> · by {{ lr.requested_by }} · {{ (lr.requested_at or '')[:10] }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <!-- PRESCRIPTIONS -->
+  {% if prescriptions %}
+  <div class="panel">
+    <div class="panel-title">💊 Prescriptions</div>
+    {% for rx in prescriptions %}
+    <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.83rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong>{{ rx.invoice_no }}</strong>
+        <span>GHS {{ "%.2f"|format(rx.total_amount or 0) }}</span>
+        <span>{% if rx.is_dispensed %}✅ Dispensed{% elif rx.is_paid %}💰 Paid{% else %}⏳ Pending{% endif %}</span>
+      </div>
+      <a href="{{ url_for('pharmacy_invoice', rx_id=rx.id) }}" style="color:#4f46e5;font-size:.76rem;">View Prescription →</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

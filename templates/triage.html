@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--teal:#0d9488;--radius:14px;}
+.triage-header{background:linear-gradient(135deg,#065f46,#0d9488,#06b6d4);border-radius:var(--radius);padding:22px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 8px 28px rgba(13,148,136,.35);animation:fadeDown .5s ease;}
+.triage-header h2{font-size:1.4rem;font-weight:800;margin:0;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;}
+.st-card{border-radius:14px;padding:18px 20px;color:#fff;text-align:center;animation:fadeUp .5s ease both;}
+.st-card .v{font-size:2rem;font-weight:900;}.st-card .l{font-size:.72rem;font-weight:600;text-transform:uppercase;opacity:.85;margin-top:4px;}
+.sc1{background:linear-gradient(135deg,#0d9488,#059669);}.sc2{background:linear-gradient(135deg,#3b82f6,#2563eb);}.sc3{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:18px;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #ccfbf1;display:flex;align-items:center;justify-content:space-between;}
+.queue-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:12px;margin-bottom:10px;border:2px solid #e2e8f0;transition:all .2s;animation:fadeUp .4s ease both;}
+.queue-item:hover{border-color:#0d9488;box-shadow:0 4px 14px rgba(13,148,136,.15);}
+.queue-item .qi-name{font-weight:700;font-size:.95rem;}
+.queue-item .qi-meta{font-size:.78rem;color:#64748b;margin-top:3px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-nhis{background:#ede9fe;color:#7c3aed;}.badge-nonins{background:#fee2e2;color:#dc2626;}
+.badge-normal{background:#d1fae5;color:#059669;}.badge-urgent{background:#fee2e2;color:#dc2626;}.badge-critical{background:#7f1d1d;color:#fff;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:50px;border:none;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-teal{background:linear-gradient(135deg,#0d9488,#059669);color:#fff;}
+.btn-blue{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.empty{text-align:center;padding:40px;color:#64748b;font-size:.88rem;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#065f46,#0d9488);}
+thead th{color:#fff;padding:10px 12px;font-size:.75rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;}
+tbody tr:hover{background:#f0fdf4;}
+tbody td{padding:9px 12px;font-size:.83rem;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:none;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .queue-item{border-color:rgba(148,163,184,.2);background:rgba(15,23,42,.5);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="triage-header">
+  <div><h2>🩺 Triage Station</h2><p style="opacity:.8;margin:4px 0 0;font-size:.85rem;">{{ HOSPITAL_NAME }} · {{ today }}</p></div>
+  <div style="text-align:right;">
+    <div style="font-size:1.8rem;font-weight:900;" id="triage-clock">--:--:--</div>
+    <div style="font-size:.8rem;opacity:.8;">{{ today_count }} patients seen today</div>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="st-card sc1"><div class="v">{{ pending|length }}</div><div class="l">⏳ Waiting</div></div>
+  <div class="st-card sc2"><div class="v">{{ today_count }}</div><div class="l">✅ Done Today</div></div>
+  <div class="st-card sc3"><div class="v">{{ done|selectattr('triage_level','equalto','Urgent')|list|length }}</div><div class="l">🚨 Urgent</div></div>
+</div>
+
+<!-- WAITING QUEUE -->
+<div class="panel">
+  <div class="panel-title">
+    <span>⏳ Patients Waiting for Triage ({{ pending|length }})</span>
+    <button onclick="location.reload()" style="background:#f0fdf4;border:1px solid #0d9488;padding:5px 12px;border-radius:50px;color:#0d9488;cursor:pointer;font-size:.78rem;">🔄 Refresh</button>
+  </div>
+  {% if pending %}
+    {% for v in pending %}
+    <div class="queue-item" style="animation-delay:{{ loop.index0 * 0.05 }}s;">
+      <div>
+        <div class="qi-name">{{ v.full_name }}</div>
+        <div class="qi-meta">
+          OPD: {{ v.opd_number }} · {{ v.sex or '—' }} / {{ v.age or '—' }}
+          {% if v.funding=='NHIS' %}<span class="badge badge-nhis">NHIS</span>{% else %}<span class="badge badge-nonins">Non-Ins.</span>{% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('triage_record', visit_id=v.id) }}" class="btn btn-teal">🩺 Record Vitals</a>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">✅ No patients waiting. All caught up!</div>
+  {% endif %}
+</div>
+
+<!-- TODAY'S DONE -->
+{% if done %}
+<div class="panel">
+  <div class="panel-title">✅ Triaged Today</div>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>#</th><th>Patient</th><th>OPD</th><th>Time</th><th>Temp</th><th>BP</th><th>Pulse</th><th>O2</th><th>Level</th><th>By</th></tr></thead>
+    <tbody>
+      {% for t in done %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ t.patient_name }}</strong></td>
+        <td>{{ t.opd_number }}</td>
+        <td>{{ t.triage_time }}</td>
+        <td>{{ t.temperature or '—' }}°C</td>
+        <td>{{ t.bp_systolic or '—' }}/{{ t.bp_diastolic or '—' }}</td>
+        <td>{{ t.pulse or '—' }}</td>
+        <td>{{ t.oxygen_sat or '—' }}%</td>
+        <td><span class="badge {% if t.triage_level=='Urgent' %}badge-urgent{% elif t.triage_level=='Critical' %}badge-critical{% else %}badge-normal{% endif %}">{{ t.triage_level }}</span></td>
+        <td>{{ t.triaged_by }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function tick(){const n=new Date();const p=x=>String(x).padStart(2,'0');document.getElementById('triage-clock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;}
+setInterval(tick,1000);tick();
+setInterval(()=>location.reload(),30000); // auto-refresh every 30s
+</script>
+{% endblock %}

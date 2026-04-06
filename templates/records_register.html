@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register New Patient — OPD</title>
+<style>
+  :root {
+    --primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+    --nhis:#7c3aed;--secondary:#06b6d4;--bg:#f0f4ff;--card:#fff;
+    --text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(135deg,var(--success),#059669,var(--secondary));padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(16,185,129,.3);}
+  .topbar h1{color:#fff;font-size:1.3rem;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.18);}
+  .btn-back{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.5);}
+  .btn-submit{background:linear-gradient(135deg,var(--success),#059669);color:#fff;padding:14px 36px;font-size:1rem;width:100%;}
+  .btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary);box-shadow:none;}
+  .form-container{max-width:820px;margin:30px auto;padding:0 20px 40px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:20px;animation:slideUp .4s ease;}
+  .card-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;display:flex;align-items:center;gap:8px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group.full{grid-column:1/-1;}
+  label{font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  label .req{color:var(--danger);}
+  input,select,textarea{padding:11px 15px;border:2px solid var(--border);border-radius:10px;font-size:.93rem;outline:none;transition:border .2s,box-shadow .2s;background:#fff;}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+  textarea{resize:vertical;min-height:70px;}
+  .alerts{padding:0 20px;margin:16px auto;max-width:820px;}
+  .alert{padding:13px 18px;border-radius:10px;margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:10px;}
+  .alert-success{background:#d1fae5;color:#065f46;border-left:4px solid var(--success);}
+  .alert-danger{background:#fee2e2;color:#991b1b;border-left:4px solid var(--danger);}
+  .alert-warning{background:#fef3c7;color:#92400e;border-left:4px solid var(--warning);}
+
+  /* FUNDING TOGGLE */
+  .funding-toggle{display:flex;gap:12px;margin-top:6px;}
+  .funding-option{flex:1;position:relative;}
+  .funding-option input[type=radio]{display:none;}
+  .funding-option label{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;
+    font-size:.9rem;font-weight:600;text-transform:none;letter-spacing:0;
+    transition:all .2s;color:var(--text);gap:6px;
+  }
+  .funding-option label .ico{font-size:1.8rem;}
+  .funding-option input:checked + label{
+    border-color:var(--primary);background:linear-gradient(135deg,#e0e7ff,#ede9fe);
+    color:var(--primary);box-shadow:0 4px 14px rgba(79,70,229,.2);
+    transform:scale(1.02);
+  }
+  .funding-option.nhis-opt input:checked + label{
+    border-color:var(--nhis);background:linear-gradient(135deg,#ede9fe,#ddd6fe);
+    color:var(--nhis);box-shadow:0 4px 14px rgba(124,58,237,.2);
+  }
+  #nhis-fields{display:none;animation:slideUp .3s ease;}
+  #nhis-fields.visible{display:block;}
+
+  /* CCC RESULT BOX */
+  .ccc-box{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:2px solid var(--nhis);border-radius:12px;padding:16px 20px;margin-top:12px;display:none;}
+  .ccc-box.visible{display:block;animation:pulse .6s ease;}
+  .ccc-box .ccc-label{font-size:.78rem;font-weight:700;color:var(--nhis);text-transform:uppercase;letter-spacing:.5px;}
+  .ccc-box .ccc-code{font-size:1.4rem;font-weight:800;color:var(--nhis);margin-top:4px;letter-spacing:1px;}
+
+  /* FEE BOX */
+  .fee-notice{background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid var(--warning);border-radius:12px;padding:16px 20px;margin-top:12px;display:none;}
+  .fee-notice.visible{display:block;animation:slideUp .3s ease;}
+  .fee-notice .fee-label{font-size:.78rem;font-weight:700;color:#92400e;text-transform:uppercase;}
+  .fee-notice .fee-amount{font-size:1.6rem;font-weight:800;color:#b45309;}
+
+  @keyframes slideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.01);}}
+  @media(max-width:600px){.form-grid,.form-grid.three{grid-template-columns:1fr;}.funding-toggle{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🧑‍⚕️ New Patient Registration</h1>
+  <a href="{{ url_for('records') }}" class="btn btn-back">← Back to Records</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="alerts">
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }}">
+      {% if cat=='success' %}✅{% elif cat=='danger' %}❌{% elif cat=='warning' %}⚠️{% endif %} {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="form-container">
+  <form method="post" action="{{ url_for('records_register') }}">
+
+    <!-- PERSONAL INFO -->
+    <div class="card">
+      <div class="card-title">👤 Personal Information</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Full Name <span class="req">*</span></label>
+          <input type="text" name="full_name" placeholder="e.g. Kwame Asante Boateng" required autofocus />
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" name="date_of_birth" />
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="text" name="age" placeholder="e.g. 34 years / 8 months" />
+        </div>
+        <div class="form-group">
+          <label>Sex <span class="req">*</span></label>
+          <select name="sex" required>
+            <option value="">-- Select --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="0XX XXX XXXX" />
+        </div>
+        <div class="form-group full">
+          <label>Home Address</label>
+          <textarea name="address" placeholder="Town, District, Region…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEXT OF KIN -->
+    <div class="card">
+      <div class="card-title">👨‍👩‍👧 Next of Kin</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Next of Kin Name</label>
+          <input type="text" name="next_of_kin" placeholder="Full name" />
+        </div>
+        <div class="form-group">
+          <label>Next of Kin Phone</label>
+          <input type="tel" name="next_of_kin_phone" placeholder="0XX XXX XXXX" />
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNDING TYPE -->
+    <div class="card">
+      <div class="card-title">💳 Funding / Insurance</div>
+
+      <div class="funding-toggle">
+        <div class="funding-option">
+          <input type="radio" name="funding" id="fund-nonins" value="Non-Insured" checked onchange="fundingChanged()" />
+          <label for="fund-nonins">
+            <span class="ico">💵</span>
+            Non-Insured
+            <small style="color:var(--muted);font-weight:400">Pay consultation fee</small>
+          </label>
+        </div>
+        <div class="funding-option nhis-opt">
+          <input type="radio" name="funding" id="fund-nhis" value="NHIS" onchange="fundingChanged()" />
+          <label for="fund-nhis">
+            <span class="ico">🛡️</span>
+            NHIS
+            <small style="color:var(--muted);font-weight:400">National Health Insurance</small>
+          </label>
+        </div>
+      </div>
+
+      <!-- NON-INSURED FEE NOTICE -->
+      <div class="fee-notice visible" id="fee-notice">
+        <div class="fee-label">⚠️ Consultation Fee Applies</div>
+        <div class="fee-amount">GHS {{ "%.2f"|format(settings.consultation_fee_non_insured) }}</div>
+        <div style="font-size:.82rem;color:#92400e;margin-top:4px;">Patient will be directed to Cashier before Triage.</div>
+      </div>
+
+      <!-- NHIS FIELDS -->
+      <div id="nhis-fields">
+        <div class="form-group" style="margin-top:16px;">
+          <label>NHIS Number <span class="req">*</span></label>
+          <input type="text" name="nhis_number" id="nhis-input" placeholder="Enter NHIS membership number" oninput="previewCCC()" />
+        </div>
+        <div class="ccc-box" id="ccc-preview">
+          <div class="ccc-label">🏷️ CCC Code (Auto-Generated)</div>
+          <div class="ccc-code" id="ccc-display">—</div>
+          <div style="font-size:.78rem;color:var(--nhis);margin-top:4px;">This code will be saved upon registration.</div>
+        </div>
+        <div style="background:#d1fae5;border:2px solid var(--success);border-radius:12px;padding:14px 18px;margin-top:12px;">
+          <strong style="color:#065f46;">✅ NHIS Patient — No consultation fee required.</strong>
+          <div style="font-size:.82rem;color:#065f46;margin-top:4px;">Patient proceeds directly to Triage or Doctor after card servicing.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn btn-submit">✅ Register Patient &amp; Generate OPD Number</button>
+  </form>
+</div>
+
+<script>
+function fundingChanged() {
+  const isNHIS = document.getElementById('fund-nhis').checked;
+  document.getElementById('nhis-fields').classList.toggle('visible', isNHIS);
+  document.getElementById('fee-notice').classList.toggle('visible', !isNHIS);
+}
+
+function previewCCC() {
+  const nhis = document.getElementById('nhis-input').value.trim();
+  const box = document.getElementById('ccc-preview');
+  const display = document.getElementById('ccc-display');
+  if (nhis.length >= 4) {
+    // Generate preview code (same logic: MD5-style visual)
+    let hash = 0;
+    for (let i = 0; i < nhis.length; i++) hash = ((hash << 5) - hash) + nhis.charCodeAt(i);
+    hash = Math.abs(hash).toString(16).toUpperCase().padStart(12, '0');
+    display.textContent = `CCC/${hash.slice(0,4)}-${hash.slice(4,8)}-${hash.slice(8,12)}`;
+    box.classList.add('visible');
+  } else {
+    box.classList.remove('visible');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--pharm:#7c3aed;--radius:14px;}
+.pharm-header{background:linear-gradient(135deg,#4c1d95,#7c3aed,#a78bfa);border-radius:var(--radius);padding:22px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 8px 28px rgba(124,58,237,.35);}
+.pharm-header h2{font-size:1.4rem;font-weight:800;margin:0;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;}
+.st-card{border-radius:14px;padding:18px 20px;color:#fff;text-align:center;animation:fadeUp .5s ease both;transition:transform .2s;cursor:pointer;}
+.st-card:hover{transform:translateY(-4px);}
+.st-card .v{font-size:2rem;font-weight:900;}.st-card .l{font-size:.72rem;font-weight:600;text-transform:uppercase;opacity:.85;margin-top:4px;}
+.sc1{background:linear-gradient(135deg,#7c3aed,#4f46e5);}.sc2{background:linear-gradient(135deg,#10b981,#059669);}.sc3{background:linear-gradient(135deg,#f59e0b,#d97706);}.sc4{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.action-btn{background:#fff;border-radius:var(--radius);padding:18px 16px;text-align:center;text-decoration:none;color:#1e293b;border:2px solid #e2e8f0;transition:all .22s;box-shadow:0 3px 10px rgba(0,0,0,.07);display:block;}
+.action-btn:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(0,0,0,.14);}
+.action-btn .ico{font-size:1.9rem;display:block;margin-bottom:7px;}.action-btn .lbl{font-size:.82rem;font-weight:700;}
+.ab-rx{border-top:4px solid #7c3aed;}.ab-rx:hover{background:#ede9fe;}
+.ab-drugs{border-top:4px solid #10b981;}.ab-drugs:hover{background:#d1fae5;}
+.ab-upload{border-top:4px solid #06b6d4;}.ab-upload:hover{background:#cffafe;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:18px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--pharm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ede9fe;display:flex;align-items:center;justify-content:space-between;}
+.rx-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 14px;border-radius:12px;border:2px solid #e2e8f0;margin-bottom:10px;transition:all .2s;}
+.rx-item:hover{border-color:#7c3aed;background:#f8f5ff;}
+.rx-name{font-weight:700;font-size:.9rem;}
+.rx-meta{font-size:.75rem;color:#64748b;margin-top:3px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-pending{background:#fef3c7;color:#92400e;}.badge-paid{background:#d1fae5;color:#059669;}.badge-dispensed{background:#ede9fe;color:#7c3aed;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:50px;border:none;font-size:.83rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-pharm{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;}
+.btn-cash{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.low-stock-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.83rem;}
+.low-stock-item:last-child{border-bottom:none;}
+.stock-bar{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.empty{text-align:center;padding:30px;color:#64748b;font-size:.84rem;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel,.body.theme-luxury .action-btn{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .action-btn{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .rx-item{border-color:rgba(148,163,184,.2);background:rgba(15,23,42,.5);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="pharm-header">
+  <div><h2>💊 Pharmacy</h2><p style="opacity:.8;margin:4px 0 0;font-size:.85rem;">{{ HOSPITAL_NAME }} · {{ today }}</p></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="{{ url_for('pharmacy_drugs') }}" class="btn btn-pharm">💊 Drug Store</a>
+    <a href="{{ url_for('pharmacy_upload_drugs') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);">📤 Upload Drugs</a>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="st-card sc1"><div class="v">{{ pending_rx|length }}</div><div class="l">⏳ Pending Rx</div></div>
+  <div class="st-card sc2"><div class="v">{{ today_dispensed }}</div><div class="l">✅ Dispensed Today</div></div>
+  <div class="st-card sc3"><div class="v">GHS {{ "%.0f"|format(today_revenue) }}</div><div class="l">💰 Revenue Today</div></div>
+  <div class="st-card sc4"><div class="v">{{ low_stock|length }}</div><div class="l">⚠️ Low Stock</div></div>
+</div>
+
+<div class="action-grid">
+  <a href="{{ url_for('pharmacy') }}" class="action-btn ab-rx"><span class="ico">📋</span><span class="lbl">Prescriptions</span></a>
+  <a href="{{ url_for('pharmacy_drugs') }}" class="action-btn ab-drugs"><span class="ico">💊</span><span class="lbl">Drug Formulary</span></a>
+  <a href="{{ url_for('pharmacy_drug_add') }}" class="action-btn ab-drugs"><span class="ico">➕</span><span class="lbl">Add Drug</span></a>
+  <a href="{{ url_for('pharmacy_upload_drugs') }}" class="action-btn ab-upload"><span class="ico">📤</span><span class="lbl">Upload Excel</span></a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+<div>
+<!-- PENDING PRESCRIPTIONS -->
+<div class="panel">
+  <div class="panel-title">
+    <span>💊 Pending Prescriptions ({{ pending_rx|length }})</span>
+    <button onclick="location.reload()" style="background:#f5f3ff;border:1px solid #7c3aed;padding:4px 12px;border-radius:50px;color:#7c3aed;cursor:pointer;font-size:.74rem;">🔄</button>
+  </div>
+  {% if pending_rx %}
+    {% for rx in pending_rx %}
+    <div class="rx-item">
+      <div>
+        <div class="rx-name">{{ rx.patient_name }}</div>
+        <div class="rx-meta">
+          {{ rx.invoice_no }} · {{ (rx.prescribed_at or '')[:10] }} · by {{ rx.prescribed_by }}
+        </div>
+        <div style="margin-top:4px;">
+          {% if rx.is_paid %}<span class="badge badge-paid">✅ Paid</span>{% else %}<span class="badge badge-pending">⏳ Unpaid</span>{% endif %}
+          {% if rx.is_dispensed %}<span class="badge badge-dispensed">✅ Dispensed</span>{% endif %}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+        <div style="font-weight:800;color:#7c3aed;">GHS {{ "%.2f"|format(rx.total_amount or 0) }}</div>
+        <a href="{{ url_for('pharmacy_invoice', rx_id=rx.id) }}" class="btn btn-pharm" style="padding:5px 12px;font-size:.76rem;">📋 Invoice</a>
+        {% if rx.is_paid %}
+        <a href="{{ url_for('pharmacy_dispense', rx_id=rx.id) }}" class="btn btn-pharm" style="padding:5px 12px;font-size:.76rem;">💊 Dispense</a>
+        {% else %}
+        <a href="{{ url_for('cashier') }}?load_pid={{ rx.patient_id }}" class="btn btn-cash" style="padding:5px 12px;font-size:.76rem;">💰 Cashier</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">✅ No pending prescriptions</div>
+  {% endif %}
+</div>
+</div>
+
+<div>
+<!-- LOW STOCK ALERT -->
+{% if low_stock %}
+<div class="panel">
+  <div class="panel-title" style="color:#ef4444;">⚠️ Low Stock Alert</div>
+  {% for d in low_stock %}
+  <div class="low-stock-item">
+    <div>
+      <strong style="font-size:.85rem;">{{ d.drug_name }}</strong>
+      <div style="font-size:.74rem;color:#64748b;">{{ d.category or 'General' }} · {{ d.unit }}</div>
+    </div>
+    <span class="stock-bar">{{ d.stock_qty }} left (min: {{ d.reorder_level }})</span>
+  </div>
+  {% endfor %}
+  <a href="{{ url_for('pharmacy_drugs') }}" class="btn btn-pharm" style="margin-top:10px;width:100%;justify-content:center;">View Drug Store</a>
+</div>
+{% endif %}
+
+<!-- QUICK STATS -->
+<div class="panel">
+  <div class="panel-title">📊 Drug Store Stats</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.85rem;">
+    <span style="color:#64748b;">Total Active Drugs</span><strong>{{ total_drugs }}</strong>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.85rem;">
+    <span style="color:#64748b;">Low Stock Items</span><strong style="color:#ef4444;">{{ low_stock|length }}</strong>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:.85rem;">
+    <span style="color:#64748b;">Today's Dispensed</span><strong style="color:#059669;">{{ today_dispensed }}</strong>
+  </div>
+</div>
+</div>
+</div>
+
+<script>setInterval(()=>location.reload(), 30000);</script>
+{% endblock %}

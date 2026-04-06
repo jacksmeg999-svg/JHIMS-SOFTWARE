@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--pharm:#7c3aed;--radius:14px;}
+.wrap{max-width:680px;margin:0 auto;}
+.header-bar{background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.panel{background:#fff;border-radius:var(--radius);padding:22px 26px;box-shadow:0 4px 14px rgba(0,0,0,.08);}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--pharm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ede9fe;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:.74rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input,select{padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.88rem;outline:none;transition:border .2s;width:100%;}
+input:focus,select:focus{border-color:var(--pharm);}
+.btn-save{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;width:100%;padding:13px;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(124,58,237,.4);}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);text-decoration:none;font-weight:600;font-size:.88rem;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+<div class="header-bar">
+  <h2 style="margin:0;font-size:1.2rem;font-weight:800;">{% if drug %}✏️ Edit Drug{% else %}➕ Add Drug{% endif %}</h2>
+  <a href="{{ url_for('pharmacy_drugs') }}" class="btn-back">← Drug Store</a>
+</div>
+<div class="panel">
+  <div class="panel-title">💊 Drug Details</div>
+  <form method="post">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Drug Name *</label>
+        <input type="text" name="drug_name" value="{{ drug.drug_name if drug else '' }}" required placeholder="e.g. Amoxicillin 500mg" />
+      </div>
+      <div class="form-group">
+        <label>Generic Name</label>
+        <input type="text" name="generic_name" value="{{ drug.generic_name if drug else '' }}" placeholder="Generic / INN name" />
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" name="category" value="{{ drug.category if drug else '' }}" placeholder="e.g. Antibiotic, Analgesic" />
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <select name="unit">
+          {% for u in ['Tablet','Capsule','Syrup (ml)','Injection (ml)','Sachet','Tube','Bottle','Drops','Inhaler','Suppository','Other'] %}
+          <option {% if drug and drug.unit==u %}selected{% endif %}>{{ u }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Unit Price (GHS)</label>
+        <input type="number" step="0.01" name="unit_price" value="{{ drug.unit_price if drug else 0 }}" />
+      </div>
+      <div class="form-group">
+        <label>Stock Quantity</label>
+        <input type="number" name="stock_qty" value="{{ drug.stock_qty if drug else 0 }}" />
+      </div>
+      <div class="form-group">
+        <label>Reorder Level</label>
+        <input type="number" name="reorder_level" value="{{ drug.reorder_level if drug else 10 }}" />
+      </div>
+      <div class="form-group">
+        <label>Supplier</label>
+        <input type="text" name="supplier" value="{{ drug.supplier if drug else '' }}" placeholder="Supplier name" />
+      </div>
+      <div class="form-group">
+        <label>Expiry Date</label>
+        <input type="date" name="expiry_date" value="{{ drug.expiry_date if drug else '' }}" />
+      </div>
+    </div>
+    <button type="submit" class="btn-save">💾 {% if drug %}Save Changes{% else %}Add to Formulary{% endif %}</button>
+  </form>
+</div>
+</div>
+{% endblock %}

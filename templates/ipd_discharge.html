@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--blue:#3b82f6;--radius:14px;}
+.panel{background:#fff;border-radius:var(--radius);padding:24px 28px;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:620px;margin:0 auto;animation:fadeUp .4s ease;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #dbeafe;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.88rem;}
+.info-row:last-child{border-bottom:none;}
+label{display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;margin-top:14px;}
+input,textarea{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:border .2s;}
+input:focus,textarea:focus{border-color:var(--blue);}
+.btn-discharge{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;width:100%;padding:13px;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;}
+.btn-discharge:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(239,68,68,.4);}
+.total-warning{background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:12px;padding:14px 18px;margin:14px 0;}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:#f1f5f9;color:#1e293b;text-decoration:none;font-weight:600;font-size:.88rem;margin-bottom:16px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<a href="{{ url_for('ipd_patient_profile', id=patient.id) }}" class="btn-back">← Back to Patient</a>
+<div class="panel">
+  <div class="panel-title">📤 Discharge Patient — {{ patient.patient_name }}</div>
+
+  <div class="info-row"><span style="color:#64748b;">Patient</span><strong>{{ patient.patient_name }}</strong></div>
+  <div class="info-row"><span style="color:#64748b;">Ward / Bed</span><strong>{{ patient.ward }} / {{ patient.bed }}</strong></div>
+  <div class="info-row"><span style="color:#64748b;">Admitted</span><strong>{{ patient.admission_date }}</strong></div>
+  <div class="info-row"><span style="color:#64748b;">Doctor</span><strong>{{ patient.doctor or '—' }}</strong></div>
+
+  <div class="total-warning">
+    <strong style="color:#92400e;">⚠️ Total Pending Bill: GHS {{ "%.2f"|format(total_charges) }}</strong>
+    <div style="font-size:.78rem;color:#92400e;margin-top:4px;">Patient must pay at Cashier after discharge.</div>
+  </div>
+
+  <form method="post">
+    <label>Discharge Date</label>
+    <input type="date" name="discharge_date" value="{{ now().strftime('%Y-%m-%d') }}" required />
+    <label>Discharge Notes / Summary</label>
+    <textarea name="discharge_notes" placeholder="Discharge summary, follow-up instructions…" rows="3"></textarea>
+    <button type="submit" class="btn-discharge">✅ Confirm Discharge</button>
+  </form>
+</div>
+{% endblock %}

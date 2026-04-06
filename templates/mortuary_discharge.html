@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--violet:#7c3aed;--radius:14px;}
+.panel{background:#fff;border-radius:var(--radius);padding:24px 28px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:18px;animation:fadeUp .4s ease;}
+.panel-title{font-size:.88rem;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ede9fe;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.88rem;}
+.info-row:last-child{border-bottom:none;}
+.form-group{margin-bottom:14px;}
+label{display:block;font-size:.76rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+input,textarea{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:border .2s;}
+input:focus,textarea:focus{border-color:var(--violet);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;border-radius:50px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;width:100%;justify-content:center;padding:14px;}
+.bill-preview{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:2px solid var(--violet);border-radius:14px;padding:18px 22px;margin-bottom:16px;}
+.bill-preview .total{font-size:1.8rem;font-weight:900;color:var(--violet);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div style="max-width:680px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <a href="{{ url_for('mortuary_view', id=case.id) }}" class="btn" style="background:#f1f5f9;color:#1e293b;">← Back</a>
+    <h2 style="margin:0;font-size:1.3rem;font-weight:800;">📤 Discharge Body — {{ case.corpse_name }}</h2>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">📋 Case Summary</div>
+    <div class="info-row"><span style="color:#64748b;">Corpse ID</span><strong>{{ case.corpse_id }}</strong></div>
+    <div class="info-row"><span style="color:#64748b;">Deposit Date</span><strong>{{ case.deposit_date }}</strong></div>
+    <div class="info-row"><span style="color:#64748b;">Embalming Fee</span><strong>GHS {{ "%.2f"|format(case.embalming_fee or 0) }}</strong></div>
+    <div class="info-row"><span style="color:#64748b;">Embalming Status</span>
+      {% if case.embalming_paid %}<span style="color:#059669;font-weight:700;">✅ Paid</span>
+      {% else %}<span style="color:#dc2626;font-weight:700;">❌ Unpaid</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">💰 Generate Discharge Bill</div>
+    <form method="post">
+      <div class="form-group">
+        <label>Release Date</label>
+        <input type="date" name="release_date" value="{{ now().strftime('%Y-%m-%d') }}" required />
+      </div>
+      <div class="form-group">
+        <label>Extra Items / Services</label>
+        <input type="text" name="extra_items" value="{{ case.extra_items or '' }}" placeholder="e.g. Coffin, Transport" />
+      </div>
+      <div class="form-group">
+        <label>Extra Amount (GHS)</label>
+        <input type="number" step="0.01" name="extra_amount" value="{{ case.extra_amount or 0 }}" oninput="updateTotal()" id="extra-amt" />
+      </div>
+
+      <div class="bill-preview">
+        <div style="font-size:.78rem;color:#7c3aed;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Bill Preview</div>
+        <div class="info-row" style="border-color:rgba(124,58,237,.15);">
+          <span>Embalming Fee</span><span>GHS {{ "%.2f"|format(case.embalming_fee or 0) }}</span>
+        </div>
+        <div class="info-row" style="border-color:rgba(124,58,237,.15);">
+          <span>Storage (calculated on save)</span><span>—</span>
+        </div>
+        <div class="info-row" style="border-color:rgba(124,58,237,.15);">
+          <span>Extra</span><span id="extra-display">GHS {{ "%.2f"|format(case.extra_amount or 0) }}</span>
+        </div>
+        <div style="margin-top:10px;font-size:.78rem;color:#7c3aed;font-weight:700;">ESTIMATED TOTAL</div>
+        <div class="total" id="total-display">—</div>
+      </div>
+
+      <button type="submit" class="btn btn-success">✅ Generate Final Invoice &amp; Send to Cashier</button>
+    </form>
+  </div>
+</div>
+<script>
+function updateTotal(){
+  const extra = parseFloat(document.getElementById('extra-amt').value)||0;
+  document.getElementById('extra-display').textContent = 'GHS '+extra.toFixed(2);
+  document.getElementById('total-display').textContent = 'Calculated on save';
+}
+</script>
+{% endblock %}

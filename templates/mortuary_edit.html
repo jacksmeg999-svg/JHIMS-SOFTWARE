@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--violet:#7c3aed;--radius:14px;}
+.panel{background:#fff;border-radius:var(--radius);padding:24px 28px;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:700px;margin:0 auto;animation:fadeUp .4s ease;}
+.panel-title{font-size:.88rem;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ede9fe;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:border .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--violet);}
+textarea{min-height:70px;}
+.btn-save{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;width:100%;padding:13px;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(124,58,237,.35);}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:#f1f5f9;color:#1e293b;text-decoration:none;font-weight:600;font-size:.88rem;margin-bottom:16px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+</style>
+{% endblock %}
+{% block content %}
+<a href="{{ url_for('mortuary_view', id=case.id) }}" class="btn-back">← Back to Case</a>
+<div class="panel">
+  <div class="panel-title">✏️ Edit Mortuary Record — {{ case.corpse_name }}</div>
+  <form method="post">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Full Name</label>
+        <input type="text" name="corpse_name" value="{{ case.corpse_name }}" required />
+      </div>
+      <div class="form-group">
+        <label>Sex</label>
+        <select name="sex">
+          <option {% if case.sex=='Male' %}selected{% endif %}>Male</option>
+          <option {% if case.sex=='Female' %}selected{% endif %}>Female</option>
+          <option {% if case.sex not in ['Male','Female'] %}selected{% endif %}>Other/Unknown</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="text" name="age" value="{{ case.age or '' }}" />
+      </div>
+      <div class="form-group">
+        <label>Relative Name</label>
+        <input type="text" name="relative_name" value="{{ case.relative_name or '' }}" />
+      </div>
+      <div class="form-group">
+        <label>Relative Phone</label>
+        <input type="tel" name="relative_phone" value="{{ case.relative_phone or '' }}" />
+      </div>
+      <div class="form-group">
+        <label>Deposit Date</label>
+        <input type="date" name="deposit_date" value="{{ case.deposit_date }}" required />
+      </div>
+      <div class="form-group">
+        <label>Cause of Death</label>
+        <input type="text" name="cause_of_death" value="{{ case.cause_of_death or '' }}" />
+      </div>
+      <div class="form-group">
+        <label>Doctor Name</label>
+        <input type="text" name="doctor_name" value="{{ case.doctor_name or '' }}" />
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea name="notes">{{ case.notes or '' }}</textarea>
+      </div>
+    </div>
+    <button type="submit" class="btn-save">💾 Save Changes</button>
+  </form>
+</div>
+{% endblock %}

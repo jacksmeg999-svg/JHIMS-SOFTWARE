@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--cash:#0d9488;--indigo:#4f46e5;--radius:14px;}
+.wrap{max-width:760px;margin:0 auto;}
+.header-bar{background:linear-gradient(135deg,#065f46,#0d9488,#06b6d4);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 6px 20px rgba(13,148,136,.3);}
+.panel{background:#fff;border-radius:var(--radius);padding:22px 26px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--cash);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ccfbf1;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:.74rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{padding:9px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.88rem;outline:none;transition:border .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--cash);}
+.item-row{display:flex;gap:8px;align-items:flex-start;padding:10px;border:2px solid #e2e8f0;border-radius:12px;margin-bottom:8px;}
+.item-row input,.item-row select{padding:8px 10px;font-size:.85rem;}
+.item-row .rm-btn{background:#fee2e2;border:none;border-radius:8px;padding:9px;cursor:pointer;color:#dc2626;font-size:.9rem;flex-shrink:0;}
+.total-preview{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #10b981;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+.total-preview .tv{font-size:1.6rem;font-weight:900;color:#0d9488;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-save{background:linear-gradient(135deg,#0d9488,#059669);color:#fff;width:100%;padding:14px;font-size:1rem;justify-content:center;margin-top:12px;}
+.btn-back{background:#f1f5f9;color:#1e293b;border:1px solid #e2e8f0;}
+.lookup-row{display:flex;gap:8px;margin-bottom:14px;}
+.lookup-row input{flex:1;padding:10px 14px;border:2px solid #6ee7b7;border-radius:50px;font-size:.88rem;outline:none;background:#fff;}
+.lookup-row button{padding:10px 20px;border-radius:50px;border:none;background:linear-gradient(135deg,#0d9488,#059669);color:#fff;font-weight:700;cursor:pointer;}
+.lookup-res{font-size:.82rem;font-weight:600;padding:8px 12px;border-radius:8px;display:none;margin-bottom:10px;}
+.lr-ok{background:#d1fae5;color:#065f46;}.lr-err{background:#fee2e2;color:#991b1b;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+<div class="header-bar">
+  <div><h2 style="margin:0;font-size:1.2rem;font-weight:800;">➕ New Manual Invoice</h2>
+  <p style="opacity:.8;margin:3px 0 0;font-size:.82rem;">Create a custom invoice for any service</p></div>
+  <a href="{{ url_for('cashier') }}" class="btn btn-back">← Cashier</a>
+</div>
+
+<div class="panel">
+  <div class="panel-title">🔍 Patient Lookup</div>
+  <div class="lookup-row">
+    <input type="text" id="lookup-q" placeholder="Enter Patient ID, OPD No., or Corpse ID…" onkeydown="if(event.key==='Enter')doLookup()"/>
+    <button onclick="doLookup()">🔍 Find</button>
+  </div>
+  <div class="lookup-res" id="lookup-res"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">📋 Invoice Details</div>
+  <form method="post" id="inv-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Patient ID</label>
+        <input type="text" name="patient_id" id="f-pid" placeholder="Auto-filled" />
+      </div>
+      <div class="form-group">
+        <label>Patient Name *</label>
+        <input type="text" name="patient_name" id="f-name" required placeholder="Full name" />
+      </div>
+      <div class="form-group">
+        <label>OPD Number</label>
+        <input type="text" name="opd_number" id="f-opd" placeholder="e.g. OPD/000001" />
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <input type="text" name="notes" placeholder="Optional notes" />
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-title">📦 Invoice Items</div>
+  <div id="item-rows">
+    <div class="item-row">
+      <div style="flex:3;"><label>Service / Description</label>
+        <select class="item-service" onchange="updateTotal()">
+          <option value="">Custom…</option>
+          {% for s in services %}<option value="{{ s.name }}">{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div style="flex:2;"><label>Description</label><input type="text" class="item-desc" placeholder="Details" /></div>
+      <div style="flex:1;"><label>Qty</label><input type="number" class="item-qty" value="1" min="1" oninput="updateTotal()" /></div>
+      <div style="flex:1;"><label>Unit Price</label><input type="number" step="0.01" class="item-price" placeholder="0.00" oninput="updateTotal()" /></div>
+      <div style="flex:1;"><label>Total</label><input type="text" class="item-total" readonly style="background:#f8faff;font-weight:700;color:#0d9488;" /></div>
+      <button type="button" class="rm-btn" onclick="this.closest('.item-row').remove();updateTotal()">✕</button>
+    </div>
+  </div>
+  <button type="button" onclick="addRow()" style="background:#e0fdf4;border:2px dashed #0d9488;border-radius:10px;padding:10px;width:100%;cursor:pointer;color:#0d9488;font-weight:600;margin-top:8px;">+ Add Item</button>
+  <input type="hidden" name="items_json" id="items-json" form="inv-form" />
+  <div class="total-preview">
+    <div><div style="font-size:.74rem;font-weight:700;color:#0d9488;text-transform:uppercase;">Invoice Total</div>
+    <div class="tv" id="grand-total">GHS 0.00</div></div>
+    <div style="font-size:.78rem;color:#065f46;">{{ HOSPITAL_NAME }}</div>
+  </div>
+  <button type="submit" form="inv-form" class="btn btn-save" onclick="prepJson()">🧾 Create Invoice</button>
+</div>
+</div>
+
+<script>
+function doLookup(){
+  const q=document.getElementById('lookup-q').value.trim();
+  if(!q) return;
+  const res=document.getElementById('lookup-res');
+  res.style.display='block'; res.className='lookup-res lr-ok'; res.textContent='Searching…';
+  fetch('/api/lookup?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+    if(d.found){
+      document.getElementById('f-pid').value=d.patient_id||q;
+      document.getElementById('f-name').value=d.name||'';
+      document.getElementById('f-opd').value=d.opd_number||'';
+      res.className='lookup-res lr-ok'; res.textContent='✅ Found: '+d.name;
+    } else {res.className='lookup-res lr-err'; res.textContent='⚠️ Not found. Fill manually.';}
+  });
+}
+function updateTotal(){
+  let grand=0;
+  document.querySelectorAll('.item-row').forEach(row=>{
+    const qty=parseFloat(row.querySelector('.item-qty').value||1);
+    const price=parseFloat(row.querySelector('.item-price').value||0);
+    const total=qty*price; grand+=total;
+    row.querySelector('.item-total').value='GHS '+total.toFixed(2);
+  });
+  document.getElementById('grand-total').textContent='GHS '+grand.toFixed(2);
+}
+function addRow(){
+  const tpl=document.querySelector('.item-row').cloneNode(true);
+  tpl.querySelectorAll('input').forEach(i=>{if(i.type!=='number')i.value='';else if(i.classList.contains('item-qty'))i.value='1';else i.value='';});
+  tpl.querySelector('button').onclick=function(){this.closest('.item-row').remove();updateTotal();};
+  tpl.querySelector('.item-service').onchange=updateTotal;
+  tpl.querySelectorAll('input[type=number]').forEach(i=>i.oninput=updateTotal);
+  document.getElementById('item-rows').appendChild(tpl);
+}
+function prepJson(){
+  const items=[];
+  document.querySelectorAll('.item-row').forEach(row=>{
+    const svc=row.querySelector('.item-service').value;
+    const desc=row.querySelector('.item-desc').value.trim();
+    const qty=parseFloat(row.querySelector('.item-qty').value||1);
+    const price=parseFloat(row.querySelector('.item-price').value||0);
+    if(desc||svc) items.push({name:svc||desc,description:desc,qty,unit_price:price,total:qty*price});
+  });
+  document.getElementById('items-json').value=JSON.stringify(items);
+}
+</script>
+{% endblock %}

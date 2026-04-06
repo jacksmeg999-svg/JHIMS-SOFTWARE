@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Visit — {{ patient.full_name }}</title>
+<style>
+  :root{--primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--nhis:#7c3aed;--secondary:#06b6d4;--bg:#f0f4ff;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(135deg,var(--primary),#7c3aed,var(--secondary));padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(79,70,229,.35);}
+  .topbar h1{color:#fff;font-size:1.2rem;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .22s;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .btn:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.2);}
+  .btn:active{transform:translateY(0);}
+  .btn-back{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.5);}
+  .wrap{max-width:800px;margin:28px auto;padding:0 20px 50px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:26px 30px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:20px;animation:slideUp .4s ease;}
+  .card-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;display:flex;align-items:center;gap:8px;}
+
+  /* Patient summary header */
+  .patient-header{background:linear-gradient(135deg,var(--primary),#7c3aed);border-radius:var(--radius);padding:24px 28px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;box-shadow:0 6px 20px rgba(79,70,229,.3);animation:slideUp .3s ease;}
+  .patient-header .pname{font-size:1.5rem;font-weight:800;}
+  .patient-header .pids{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
+  .pid-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:50px;font-size:.82rem;font-weight:700;}
+  .funding-pill{padding:7px 18px;border-radius:50px;font-weight:700;font-size:.88rem;}
+  .fp-nhis{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:var(--nhis);}
+  .fp-nonins{background:linear-gradient(135deg,#fee2e2,#fecaca);color:var(--danger);}
+
+  /* STATUS TRACKER */
+  .tracker{display:flex;gap:0;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;}
+  .tracker-step{flex:1;min-width:100px;text-align:center;position:relative;}
+  .tracker-step::after{content:'';position:absolute;top:22px;left:60%;width:100%;height:3px;background:var(--border);z-index:0;}
+  .tracker-step:last-child::after{display:none;}
+  .tracker-step .dot{width:44px;height:44px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:3px solid var(--border);background:var(--card);position:relative;z-index:1;transition:all .3s;}
+  .tracker-step.done .dot{background:var(--success);border-color:var(--success);color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.4);}
+  .tracker-step.active .dot{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(79,70,229,.4);animation:pulse 1.5s infinite;}
+  .tracker-step.pending .dot{background:#f1f5f9;color:var(--muted);}
+  .tracker-step .label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  .tracker-step.done .label{color:var(--success);}
+  .tracker-step.active .label{color:var(--primary);font-weight:800;}
+
+  /* SEND TO BUTTONS */
+  .send-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
+  .send-btn{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:22px 16px;border-radius:var(--radius);text-decoration:none;
+    border:2px solid transparent;transition:all .25s;gap:8px;
+    box-shadow:0 3px 12px rgba(0,0,0,.1);
+  }
+  .send-btn:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,.16);}
+  .send-btn .ico{font-size:2rem;}
+  .send-btn .lbl{font-size:.88rem;font-weight:700;}
+  .send-btn .sub{font-size:.74rem;opacity:.8;}
+  .sb-triage{background:linear-gradient(135deg,#d1fae5,#6ee7b7);color:#065f46;border-color:#6ee7b7;}
+  .sb-doctor{background:linear-gradient(135deg,#e0e7ff,#a5b4fc);color:#3730a3;border-color:#a5b4fc;}
+  .sb-cashier{background:linear-gradient(135deg,#fef3c7,#fcd34d);color:#92400e;border-color:#fcd34d;}
+  .sb-lab{background:linear-gradient(135deg,#cffafe,#67e8f9);color:#155e75;border-color:#67e8f9;}
+  .sb-pharmacy{background:linear-gradient(135deg,#fce7f3,#f9a8d4);color:#9d174d;border-color:#f9a8d4;}
+  .sb-disabled{background:#f1f5f9;color:var(--muted);cursor:not-allowed;border-color:var(--border);}
+  .sb-disabled:hover{transform:none;box-shadow:0 3px 12px rgba(0,0,0,.1);}
+
+  /* NHIS CCC BOX */
+  .ccc-display{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:2px solid var(--nhis);border-radius:12px;padding:18px 22px;}
+  .ccc-display .ccc-label{font-size:.78rem;font-weight:700;color:var(--nhis);text-transform:uppercase;letter-spacing:.5px;}
+  .ccc-display .ccc-code{font-size:1.6rem;font-weight:800;color:var(--nhis);margin-top:6px;letter-spacing:1.5px;}
+
+  /* FEE STATUS */
+  .fee-status-paid{background:#d1fae5;border:2px solid var(--success);border-radius:12px;padding:16px 20px;}
+  .fee-status-unpaid{background:#fee2e2;border:2px solid var(--danger);border-radius:12px;padding:16px 20px;}
+
+  .alerts{padding:0 20px;max-width:800px;margin:16px auto;}
+  .alert{padding:13px 18px;border-radius:10px;margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:10px;}
+  .alert-success{background:#d1fae5;color:#065f46;border-left:4px solid var(--success);}
+  .alert-danger{background:#fee2e2;color:#991b1b;border-left:4px solid var(--danger);}
+  .alert-warning{background:#fef3c7;color:#92400e;border-left:4px solid var(--warning);}
+  .alert-info{background:#cffafe;color:#155e75;border-left:4px solid var(--secondary);}
+  @keyframes slideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+  @media(max-width:600px){.patient-header{flex-direction:column;gap:10px;}.tracker{gap:2px;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📋 OPD Visit Detail</h1>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('records_patient_history', patient_id=patient.patient_id) }}" class="btn btn-back">📁 History</a>
+    <a href="{{ url_for('records') }}" class="btn btn-back">← Records</a>
+  </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}
+<div class="alerts">{% for cat,msg in messages %}<div class="alert alert-{{cat}}">
+  {% if cat=='success' %}✅{% elif cat=='danger' %}❌{% elif cat=='warning' %}⚠️{% else %}ℹ️{% endif %} {{msg}}
+</div>{% endfor %}</div>
+{% endif %}{% endwith %}
+
+<div class="wrap">
+
+  <!-- PATIENT HEADER -->
+  <div class="patient-header">
+    <div>
+      <div class="pname">{{ patient.full_name }}</div>
+      <div class="pids">
+        <span class="pid-badge">🪪 OPD: {{ visit.opd_number }}</span>
+        <span class="pid-badge">🆔 PID: {{ visit.patient_id }}</span>
+        <span class="pid-badge">📅 {{ visit.visit_date }}</span>
+        <span class="pid-badge">🏷️ {{ visit.visit_type }}</span>
+      </div>
+    </div>
+    <div>
+      {% if visit.funding == 'NHIS' %}
+      <span class="funding-pill fp-nhis">🛡️ NHIS</span>
+      {% else %}
+      <span class="funding-pill fp-nonins">💵 Non-Insured</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- JOURNEY TRACKER -->
+  <div class="card">
+    <div class="card-title">🗺️ Patient Journey</div>
+    <div class="tracker">
+      {% set loc = visit.current_location %}
+      <div class="tracker-step {{ 'done' if loc not in ['Records'] else 'active' }}">
+        <div class="dot">📋</div><div class="label">Records</div>
+      </div>
+      <div class="tracker-step {{ 'done' if visit.cashier_status=='Paid' else ('active' if loc=='Cashier' else 'pending') }}">
+        <div class="dot">💰</div><div class="label">Cashier</div>
+      </div>
+      <div class="tracker-step {{ 'done' if visit.triage_status=='Done' else ('active' if loc=='Triage' else 'pending') }}">
+        <div class="dot">🩺</div><div class="label">Triage</div>
+      </div>
+      <div class="tracker-step {{ 'done' if visit.doctor_status=='Done' else ('active' if loc=='Doctor' else 'pending') }}">
+        <div class="dot">👨‍⚕️</div><div class="label">Doctor</div>
+      </div>
+      <div class="tracker-step {{ 'done' if visit.lab_status=='Done' else ('active' if loc=='Lab' else 'pending') }}">
+        <div class="dot">🔬</div><div class="label">Lab</div>
+      </div>
+      <div class="tracker-step {{ 'done' if visit.pharmacy_status=='Done' else ('active' if loc=='Pharmacy' else 'pending') }}">
+        <div class="dot">💊</div><div class="label">Pharmacy</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.88rem;color:var(--muted);">
+      📍 Currently at: <strong style="color:var(--primary);">{{ visit.current_location }}</strong>
+    </div>
+  </div>
+
+  <!-- NHIS CCC CODE -->
+  {% if visit.funding == 'NHIS' %}
+  <div class="card">
+    <div class="card-title">🛡️ NHIS Information</div>
+    <div class="ccc-display">
+      <div class="ccc-label">NHIS Number</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--nhis);margin-top:4px;">{{ visit.nhis_number or '—' }}</div>
+      <div class="ccc-label" style="margin-top:14px;">🏷️ CCC Code (Auto-Generated)</div>
+      <div class="ccc-code">{{ visit.ccc_code or '—' }}</div>
+    </div>
+    <div style="background:#d1fae5;border:2px solid var(--success);border-radius:12px;padding:14px;margin-top:12px;">
+      <strong style="color:#065f46;">✅ NHIS Patient — No consultation fee. Cleared for Triage.</strong>
+    </div>
+  </div>
+  {% else %}
+  <!-- CONSULTATION FEE STATUS -->
+  <div class="card">
+    <div class="card-title">💰 Consultation Fee</div>
+    {% if visit.consultation_paid %}
+    <div class="fee-status-paid">
+      <strong style="color:#065f46;font-size:1rem;">✅ Paid — GHS {{ "%.2f"|format(visit.consultation_fee) }}</strong>
+      <div style="font-size:.82rem;color:#065f46;margin-top:4px;">Patient cleared. May proceed to Triage or Doctor.</div>
+    </div>
+    {% else %}
+    <div class="fee-status-unpaid">
+      <strong style="color:#991b1b;font-size:1rem;">⏳ Pending — GHS {{ "%.2f"|format(visit.consultation_fee) }}</strong>
+      <div style="font-size:.82rem;color:#991b1b;margin-top:4px;">Patient must pay consultation fee at Cashier before Triage.</div>
+    </div>
+    <a href="{{ url_for('records_send_to_cashier', visit_id=visit.id) }}" class="btn" style="background:linear-gradient(135deg,var(--warning),#d97706);color:#fff;margin-top:12px;">💰 Send to Cashier</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- SEND TO DEPARTMENT -->
+  <div class="card">
+    <div class="card-title">📤 Send Patient To Department</div>
+    {% set blocked = (visit.funding == 'Non-Insured' and not visit.consultation_paid) %}
+    <div class="send-grid">
+      <a href="{% if not blocked %}{{ url_for('records_send_to_triage', visit_id=visit.id) }}{% else %}#{% endif %}"
+         class="send-btn {% if blocked %}sb-disabled{% else %}sb-triage{% endif %}"
+         {% if blocked %}onclick="alert('Pay consultation fee first!')"{% endif %}>
+        <span class="ico">🩺</span><span class="lbl">Triage</span><span class="sub">Vital signs</span>
+      </a>
+      <a href="{% if not blocked %}{{ url_for('records_send_to_doctor', visit_id=visit.id) }}{% else %}#{% endif %}"
+         class="send-btn {% if blocked %}sb-disabled{% else %}sb-doctor{% endif %}"
+         {% if blocked %}onclick="alert('Pay consultation fee first!')"{% endif %}>
+        <span class="ico">👨‍⚕️</span><span class="lbl">Doctor</span><span class="sub">Consultation</span>
+      </a>
+      <a href="{{ url_for('records_send_to_cashier', visit_id=visit.id) }}" class="send-btn sb-cashier">
+        <span class="ico">💰</span><span class="lbl">Cashier</span><span class="sub">Payment</span>
+      </a>
+      <a href="{{ url_for('records_send_to_lab', visit_id=visit.id) }}" class="send-btn sb-lab">
+        <span class="ico">🔬</span><span class="lbl">Lab</span><span class="sub">Investigation</span>
+      </a>
+      <a href="{{ url_for('cashier') }}?load_pid={{ visit.patient_id }}" class="send-btn sb-pharmacy">
+        <span class="ico">💊</span><span class="lbl">Pharmacy</span><span class="sub">Medication</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--blue:#3b82f6;--radius:14px;}
+.ipd-pheader{background:linear-gradient(135deg,#1e3a8a,#3b82f6);border-radius:var(--radius);padding:22px 26px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;box-shadow:0 6px 22px rgba(59,130,246,.3);}
+.pname{font-size:1.35rem;font-weight:800;}
+.pids{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.pid-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);padding:4px 12px;border-radius:50px;font-size:.78rem;font-weight:600;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.82rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid #dbeafe;display:flex;align-items:center;gap:8px;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+.info-item .key{font-size:.7rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.info-item .val{font-size:.92rem;font-weight:700;margin-top:2px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-admitted{background:#dbeafe;color:#1d4ed8;}
+.badge-discharged{background:#fee2e2;color:#dc2626;}
+.charge-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:.84rem;}
+.charge-row:last-child{border-bottom:none;}
+.add-charge-form{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.add-charge-form input{flex:1;min-width:120px;padding:9px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.88rem;outline:none;}
+.add-charge-form input:focus{border-color:var(--blue);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border-radius:50px;border:none;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.btn-info{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;}
+.total-bar{background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid var(--blue);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.total-bar .tv{font-size:1.4rem;font-weight:900;color:var(--blue);}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+thead th{background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;padding:9px 11px;text-align:left;font-weight:600;text-transform:uppercase;font-size:.72rem;}
+tbody td{padding:9px 11px;border-bottom:1px solid #f1f5f9;}
+tbody tr:hover td{background:#eff6ff;}
+.tab-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.tab-btn{padding:8px 18px;border-radius:50px;border:2px solid #e2e8f0;background:#fff;font-weight:600;cursor:pointer;font-size:.82rem;color:#64748b;transition:all .2s;}
+.tab-btn.active,.tab-btn:hover{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-color:transparent;}
+.tab-content{display:none;}.tab-content.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .add-charge-form input{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury .info-item .key{color:#9ca3af;}
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="ipd-pheader">
+  <div>
+    <div class="pname">🛏️ {{ patient.patient_name }}</div>
+    <div class="pids">
+      <span class="pid-badge">🆔 {{ patient.patient_id or '—' }}</span>
+      <span class="pid-badge">🏥 {{ patient.ward }}</span>
+      <span class="pid-badge">🛏️ Bed {{ patient.bed }}</span>
+      <span class="pid-badge">📅 {{ patient.admission_date }}</span>
+      {% if patient.status=='Admitted' %}<span class="pid-badge" style="background:#10b981;">✅ Admitted</span>
+      {% else %}<span class="pid-badge" style="background:#ef4444;">Discharged</span>{% endif %}
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="{{ url_for('ipd_bill', id=patient.id) }}" class="btn btn-primary">🧾 Bill</a>
+    {% if patient.status=='Admitted' %}
+    <a href="{{ url_for('discharge_patient', id=patient.id) }}" class="btn btn-danger">📤 Discharge</a>
+    {% endif %}
+    <a href="{{ url_for('ipd_patients') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.35);">← Back</a>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('info',this)">👤 Patient Info</button>
+  <button class="tab-btn" onclick="showTab('charges',this)">💰 Charges ({{ charges|length }})</button>
+  <button class="tab-btn" onclick="showTab('labs',this)">🔬 Lab ({{ labs|length }})</button>
+  <button class="tab-btn" onclick="showTab('receipts',this)">🧾 Receipts ({{ receipts|length }})</button>
+</div>
+
+<!-- PATIENT INFO -->
+<div id="tab-info" class="tab-content active">
+  <div class="panel">
+    <div class="panel-title">👤 Patient Details</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="key">Full Name</div><div class="val">{{ patient.patient_name }}</div></div>
+      <div class="info-item"><div class="key">Patient ID</div><div class="val">{{ patient.patient_id or '—' }}</div></div>
+      <div class="info-item"><div class="key">Age</div><div class="val">{{ patient.age or '—' }}</div></div>
+      <div class="info-item"><div class="key">Sex</div><div class="val">{{ patient.sex or '—' }}</div></div>
+      <div class="info-item"><div class="key">Diagnosis</div><div class="val">{{ patient.diagnosis or '—' }}</div></div>
+      <div class="info-item"><div class="key">Doctor</div><div class="val">{{ patient.doctor or '—' }}</div></div>
+      <div class="info-item"><div class="key">Ward</div><div class="val">{{ patient.ward }}</div></div>
+      <div class="info-item"><div class="key">Bed</div><div class="val">{{ patient.bed }}</div></div>
+      <div class="info-item"><div class="key">Funding</div><div class="val">{{ patient.funding or '—' }}</div></div>
+      <div class="info-item"><div class="key">Admission Date</div><div class="val">{{ patient.admission_date }}</div></div>
+      <div class="info-item"><div class="key">Status</div><div class="val">
+        <span class="badge {% if patient.status=='Admitted' %}badge-admitted{% else %}badge-discharged{% endif %}">{{ patient.status }}</span>
+      </div></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="{{ url_for('cashier') }}?load_pid={{ patient.patient_id }}" class="btn btn-warning">💰 Send to Cashier</a>
+      <a href="{{ url_for('lab') }}?q={{ patient.patient_id }}" class="btn btn-info">🔬 Send to Lab</a>
+    </div>
+  </div>
+</div>
+
+<!-- CHARGES -->
+<div id="tab-charges" class="tab-content">
+  <div class="panel">
+    <div class="panel-title">💰 Daily Charges &amp; Bills</div>
+    {% if charges %}
+    {% for ch in charges %}
+    <div class="charge-row">
+      <span>{{ ch.description }}</span>
+      <span style="color:#64748b;font-size:.78rem;">{{ ch.charge_date }}</span>
+      <strong style="color:#3b82f6;">GHS {{ "%.2f"|format(ch.amount) }}</strong>
+    </div>
+    {% endfor %}
+    <div class="total-bar">
+      <span style="font-weight:700;">Total Charges</span>
+      <div class="tv">GHS {{ "%.2f"|format(total_charges) }}</div>
+    </div>
+    {% else %}
+    <p style="color:#64748b;font-size:.85rem;">No charges added yet.</p>
+    {% endif %}
+
+    {% if patient.status == 'Admitted' %}
+    <div style="margin-top:16px;">
+      <div style="font-size:.82rem;font-weight:700;color:#64748b;margin-bottom:8px;">➕ Add Charge</div>
+      <form method="post" action="{{ url_for('ipd_add_charge', id=patient.id) }}">
+        <div class="add-charge-form">
+          <input type="text" name="description" placeholder="Description (e.g. Bed fee, Medication)" required />
+          <input type="number" name="amount" step="0.01" placeholder="Amount (GHS)" required />
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- LABS -->
+<div id="tab-labs" class="tab-content">
+  <div class="panel">
+    <div class="panel-title">🔬 Lab Requests</div>
+    {% if labs %}
+    <table>
+      <thead><tr><th>Date</th><th>Invoice</th><th>Amount</th><th>Paid</th><th>Results</th></tr></thead>
+      <tbody>
+        {% for l in labs %}
+        <tr>
+          <td>{{ (l.created_at or '')[:10] }}</td>
+          <td><a href="{{ url_for('lab_invoice', req_id=l.id) }}" style="color:var(--blue);font-weight:700;">{{ l.invoice_no }}</a></td>
+          <td>GHS {{ "%.2f"|format(l.total_amount or 0) }}</td>
+          <td>{% if l.is_paid %}✅{% else %}❌{% endif %}</td>
+          <td>{% if l.results_json %}✅ Ready{% else %}⏳ Pending{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p style="color:#64748b;font-size:.85rem;">No lab requests.</p>{% endif %}
+    <a href="{{ url_for('lab') }}?q={{ patient.patient_id }}" class="btn btn-info" style="margin-top:12px;">🔬 New Lab Request</a>
+  </div>
+</div>
+
+<!-- RECEIPTS -->
+<div id="tab-receipts" class="tab-content">
+  <div class="panel">
+    <div class="panel-title">🧾 Payment Receipts</div>
+    {% if receipts %}
+    <table>
+      <thead><tr><th>Date</th><th>Receipt #</th><th>Service</th><th>Amount</th></tr></thead>
+      <tbody>
+        {% for r in receipts %}
+        <tr>
+          <td>{{ r.date }}</td>
+          <td><a href="{{ url_for('receipt_view', rec_id=r.id) }}" style="color:var(--blue);font-weight:700;">{{ r.receipt_number }}</a></td>
+          <td>{{ r.service_received }}</td>
+          <td><strong>GHS {{ "%.2f"|format(r.amount_paid or 0) }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p style="color:#64748b;font-size:.85rem;">No receipts found.</p>{% endif %}
+    <a href="{{ url_for('cashier') }}?load_pid={{ patient.patient_id }}" class="btn btn-warning" style="margin-top:12px;">💰 New Receipt</a>
+  </div>
+</div>
+
+<script>
+function showTab(name, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

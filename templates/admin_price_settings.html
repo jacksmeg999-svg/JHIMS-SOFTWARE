@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--primary:#4f46e5;--violet:#7c3aed;--teal:#0d9488;--amber:#f59e0b;--radius:14px;}
+.price-header{background:linear-gradient(135deg,#1e293b,#4f46e5,#7c3aed);border-radius:var(--radius);padding:22px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;box-shadow:0 8px 28px rgba(79,70,229,.3);}
+.price-header h2{font-size:1.3rem;font-weight:800;margin:0;}
+.section-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.stab{padding:10px 22px;border-radius:50px;border:2px solid #e2e8f0;background:#fff;font-weight:700;cursor:pointer;font-size:.85rem;color:#64748b;transition:all .2s;}
+.stab.active,.stab:hover{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(79,70,229,.3);}
+.panel{background:#fff;border-radius:var(--radius);padding:24px 28px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:18px;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+label{font-size:.74rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input{padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:border .2s;width:100%;}
+input:focus{border-color:var(--primary);}
+.btn-save{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:50px;padding:13px 28px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:16px;}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(79,70,229,.4);}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);text-decoration:none;font-weight:600;font-size:.88rem;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#1e293b,#4f46e5);}
+thead th{color:#fff;padding:10px 12px;font-size:.76rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;}
+tbody tr:hover{background:#f8f7ff;}
+tbody td{padding:10px 12px;font-size:.85rem;}
+tbody td input{padding:7px 10px;font-size:.85rem;}
+.section-hidden{display:none;}.section-active{display:block;animation:fadeUp .35s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+body.theme-luxury .stab{background:rgba(15,23,42,.8);color:#9ca3af;border-color:rgba(148,163,184,.2);}
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="price-header">
+  <div>
+    <h2>💲 Price Settings</h2>
+    <p style="opacity:.8;margin:4px 0 0;font-size:.85rem;">Admin Only — Manage all module fees and prices</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}" class="btn-back">🏠 Dashboard</a>
+</div>
+
+<div class="section-tabs">
+  <button class="stab active" onclick="showSection('mortuary',this)">⚰️ Mortuary Fees</button>
+  <button class="stab" onclick="showSection('opd',this)">🏥 OPD / Consultation</button>
+  <button class="stab" onclick="showSection('lab',this)">🔬 Lab Test Prices</button>
+</div>
+
+<!-- MORTUARY FEES -->
+<div id="sec-mortuary" class="section-active">
+  <div class="panel">
+    <div class="panel-title">⚰️ Mortuary Fee Structure</div>
+    <form method="post">
+      <input type="hidden" name="section" value="mortuary" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Embalming Fee (GHS)</label>
+          <input type="number" step="0.01" name="embalming_fee" value="{{ mort_s.embalming_fee if mort_s else 350 }}" />
+        </div>
+        <div class="form-group">
+          <label>Week 1 Daily Rate (GHS)</label>
+          <input type="number" step="0.01" name="week1_rate" value="{{ mort_s.week1_rate if mort_s else 16 }}" />
+        </div>
+        <div class="form-group">
+          <label>Week 2 Daily Rate (GHS)</label>
+          <input type="number" step="0.01" name="week2_rate" value="{{ mort_s.week2_rate if mort_s else 13 }}" />
+        </div>
+        <div class="form-group">
+          <label>Week 3+ Daily Rate (GHS)</label>
+          <input type="number" step="0.01" name="week3_rate" value="{{ mort_s.week3_rate if mort_s else 10 }}" />
+        </div>
+      </div>
+      <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-top:12px;font-size:.82rem;color:#92400e;">
+        💡 <strong>Billing Logic:</strong> Week 1 (days 1–7), Week 2 (days 8–14), Week 3+ (day 15 onwards)
+      </div>
+      <button type="submit" class="btn-save">💾 Save Mortuary Fees</button>
+    </form>
+  </div>
+</div>
+
+<!-- OPD CONSULTATION -->
+<div id="sec-opd" class="section-hidden">
+  <div class="panel">
+    <div class="panel-title">🏥 OPD Consultation Fee</div>
+    <form method="post">
+      <input type="hidden" name="section" value="opd" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Non-Insured Consultation Fee (GHS)</label>
+          <input type="number" step="0.01" name="consultation_fee" value="{{ opd_s.consultation_fee_non_insured if opd_s else 10.0 }}" />
+        </div>
+      </div>
+      <div style="background:#d1fae5;border:2px solid #10b981;border-radius:10px;padding:12px 16px;margin-top:12px;font-size:.82rem;color:#065f46;">
+        ✅ <strong>NHIS patients:</strong> No consultation fee. <strong>Non-insured patients:</strong> Must pay this fee before Triage.
+      </div>
+      <button type="submit" class="btn-save">💾 Save OPD Fee</button>
+    </form>
+  </div>
+</div>
+
+<!-- LAB PRICES -->
+<div id="sec-lab" class="section-hidden">
+  <div class="panel">
+    <div class="panel-title">🔬 Lab Test Prices</div>
+    <form method="post">
+      <input type="hidden" name="section" value="lab" />
+      <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Test Name</th><th>Insured Price (GHS)</th><th>Non-Insured Price (GHS)</th></tr>
+        </thead>
+        <tbody>
+          {% for t in lab_prices %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ t.name }}</strong></td>
+            <td><input type="number" step="0.01" name="ins_{{ t.id }}" value="{{ '%.2f'|format(t.insured_price or 0) }}" style="width:110px;" /></td>
+            <td><input type="number" step="0.01" name="non_{{ t.id }}" value="{{ '%.2f'|format(t.non_insured_price or 0) }}" style="width:110px;" /></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <button type="submit" class="btn-save">💾 Save Lab Prices</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function showSection(name, btn) {
+  document.querySelectorAll('[id^="sec-"]').forEach(el => { el.classList.remove('section-active'); el.classList.add('section-hidden'); });
+  document.getElementById('sec-' + name).classList.remove('section-hidden');
+  document.getElementById('sec-' + name).classList.add('section-active');
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--pharm:#7c3aed;--radius:14px;}
+.header-bar{background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;box-shadow:0 6px 20px rgba(124,58,237,.3);}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--pharm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #ede9fe;}
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.search-row input,.search-row select{padding:9px 14px;border:2px solid #e2e8f0;border-radius:50px;font-size:.88rem;outline:none;flex:1;}
+.search-row input:focus{border-color:var(--pharm);}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#4c1d95,#7c3aed);}
+thead th{color:#fff;padding:10px 12px;font-size:.75rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s;}
+tbody tr:hover{background:#f8f5ff;}
+tbody td{padding:9px 12px;font-size:.83rem;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:50px;border:none;font-size:.82rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-pharm{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.badge-low{background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:50px;font-size:.7rem;font-weight:700;}
+.badge-ok{background:#d1fae5;color:#059669;padding:2px 8px;border-radius:50px;font-size:.7rem;font-weight:700;}
+.empty{text-align:center;padding:40px;color:#64748b;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .search-row input,.body.theme-luxury .search-row select{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="header-bar">
+  <div><h2 style="margin:0;font-size:1.2rem;font-weight:800;">💊 Drug Formulary</h2>
+  <p style="opacity:.8;margin:3px 0 0;font-size:.82rem;">{{ drugs|length }} active drugs</p></div>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('pharmacy_drug_add') }}" class="btn btn-success">➕ Add Drug</a>
+    <a href="{{ url_for('pharmacy_upload_drugs') }}" class="btn btn-warning">📤 Upload Excel</a>
+    <a href="{{ url_for('pharmacy') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);">← Pharmacy</a>
+  </div>
+</div>
+
+<div class="panel">
+  <form method="get" style="display:contents;">
+    <div class="search-row">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search drug name or generic name…" />
+      <select name="cat">
+        <option value="">All Categories</option>
+        {% for c in categories %}<option value="{{ c }}" {% if c==cat %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-pharm">🔍 Search</button>
+      {% if q or cat %}<a href="{{ url_for('pharmacy_drugs') }}" class="btn" style="background:#f1f5f9;color:#1e293b;border:1px solid #e2e8f0;">Clear</a>{% endif %}
+    </div>
+  </form>
+
+  {% if drugs %}
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>#</th><th>Drug Name</th><th>Generic Name</th><th>Category</th><th>Unit</th><th>Price (GHS)</th><th>Stock</th><th>Reorder</th><th>Expiry</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for d in drugs %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ d.drug_name }}</strong></td>
+        <td style="color:#64748b;">{{ d.generic_name or '—' }}</td>
+        <td>{{ d.category or '—' }}</td>
+        <td>{{ d.unit }}</td>
+        <td style="font-weight:700;color:#7c3aed;">{{ "%.2f"|format(d.unit_price or 0) }}</td>
+        <td>
+          {% if d.stock_qty <= d.reorder_level %}
+          <span class="badge-low">{{ d.stock_qty }}</span>
+          {% else %}
+          <span class="badge-ok">{{ d.stock_qty }}</span>
+          {% endif %}
+        </td>
+        <td>{{ d.reorder_level }}</td>
+        <td>{{ d.expiry_date or '—' }}</td>
+        <td>
+          <a href="{{ url_for('pharmacy_drug_edit', did=d.id) }}" class="btn btn-warning" style="padding:5px 11px;font-size:.76rem;">✏️ Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <div style="font-size:3rem;">💊</div>
+    <p>No drugs found. {% if q %}Try a different search.{% else %}Add drugs or upload an Excel file.{% endif %}</p>
+    <a href="{{ url_for('pharmacy_drug_add') }}" class="btn btn-pharm" style="margin-top:12px;">➕ Add First Drug</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,150 +1,91 @@
 {% extends "base.html" %}
-{% block content %}
-
+{% block extra_head %}
 <style>
-body {
-    background: linear-gradient(135deg,#1f4037,#99f2c8);
-    font-family: 'Segoe UI', sans-serif;
-}
-
-/* TITLE */
-.title {
-    text-align:center;
-    color:white;
-    margin-top:20px;
-    font-size:28px;
-    animation: fadeIn 1s ease;
-}
-
-/* TABLE */
-.table-container {
-    margin:30px;
-    background:white;
-    padding:20px;
-    border-radius:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.3);
-    animation: fadeIn 1s ease;
-}
-
-table {
-    width:100%;
-    border-collapse:collapse;
-}
-
-th {
-    background:#0072ff;
-    color:white;
-    padding:12px;
-}
-
-td {
-    padding:12px;
-    text-align:center;
-}
-
-tr {
-    transition:0.3s;
-}
-
-tr:hover {
-    background:#f5f5f5;
-}
-
-/* STATUS */
-.status {
-    padding:5px 10px;
-    border-radius:10px;
-    color:white;
-}
-
-.admitted { background:green; }
-.discharged { background:red; }
-
-/* BUTTONS */
-.btn {
-    padding:6px 10px;
-    border:none;
-    border-radius:8px;
-    color:white;
-    cursor:pointer;
-    margin:2px;
-}
-
-.discharge { background:red; }
-.cashier { background:blue; }
-.lab { background:purple; }
-
-.btn:hover {
-    transform:scale(1.1);
-}
-
-/* ANIMATION */
-@keyframes fadeIn {
-    from { opacity:0; transform:translateY(20px); }
-    to { opacity:1; transform:translateY(0); }
-}
+:root{--blue:#3b82f6;--radius:14px;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:18px;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #dbeafe;display:flex;align-items:center;gap:8px;}
+.search-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.search-row input,.search-row select{padding:9px 14px;border:2px solid #e2e8f0;border-radius:50px;font-size:.88rem;outline:none;flex:1;}
+.search-row input:focus{border-color:var(--blue);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border-radius:50px;border:none;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#1e3a8a,#3b82f6);}
+thead th{color:#fff;padding:11px 12px;font-size:.76rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s;}
+tbody tr:hover{background:#eff6ff;}
+tbody td{padding:10px 12px;font-size:.84rem;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-admitted{background:#dbeafe;color:#1d4ed8;}
+.badge-discharged{background:#fee2e2;color:#dc2626;}
+.empty{text-align:center;padding:50px;color:#64748b;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .search-row input,.body.theme-luxury .search-row select{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
 </style>
-
-<h2 class="title">🏥 Admitted Patients</h2>
-
-<div class="table-container">
-
-<table>
-<thead>
-<tr>
-    <th>ID</th>
-    <th>Name</th>
-    <th>Ward</th>
-    <th>Bed</th>
-    <th>Doctor</th>
-    <th>Status</th>
-    <th>Actions</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for p in patients %}
-
-<tr>
-
-<td>{{ p[0] }}</td>
-<td>{{ p[2] }}</td>
-<td>{{ p[7] }}</td>
-<td>{{ p[8] }}</td>
-<td>{{ p[6] }}</td>
-
-<td>
-    {% if p[10] == 'Admitted' %}
-        <span class="status admitted">Admitted</span>
-    {% else %}
-        <span class="status discharged">Discharged</span>
-    {% endif %}
-</td>
-
-<td>
-    <a href="/ipd/discharge/{{ p[0] }}">
-        <button class="btn discharge">Discharge</button>
-    </a>
-
-```
-<a href="/ipd/send_to_cashier/{{ p[0] }}">
-    <button class="btn cashier">Cashier</button>
-</a>
-
-<a href="/ipd/send_to_lab/{{ p[0] }}">
-    <button class="btn lab">Lab</button>
-</a>
-```
-
-</td>
-
-</tr>
-{% endfor %}
-
-</tbody>
-</table>
-
+{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+  <h2 style="margin:0;font-size:1.3rem;font-weight:800;">📋 In-Patient List</h2>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('ipd_admit') }}" class="btn btn-success">➕ Admit Patient</a>
+    <a href="{{ url_for('ipd') }}" class="btn btn-primary">🏥 IPD Dashboard</a>
+  </div>
 </div>
 
+<div class="panel">
+  <form method="get" style="margin:0;">
+    <div class="search-row">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search patient name or ID…" />
+      <select name="status">
+        <option value="Admitted" {% if status_f=='Admitted' %}selected{% endif %}>Admitted</option>
+        <option value="Discharged" {% if status_f=='Discharged' %}selected{% endif %}>Discharged</option>
+        <option value="All" {% if status_f=='All' %}selected{% endif %}>All</option>
+      </select>
+      <button type="submit" class="btn btn-primary">🔍 Search</button>
+    </div>
+  </form>
+
+  {% if patients %}
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr><th>#</th><th>Patient ID</th><th>Name</th><th>Age/Sex</th><th>Ward</th><th>Bed</th><th>Diagnosis</th><th>Doctor</th><th>Admitted</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ p.patient_id or '—' }}</td>
+        <td><strong>{{ p.patient_name }}</strong></td>
+        <td>{{ p.age or '—' }} / {{ p.sex or '—' }}</td>
+        <td>{{ p.ward }}</td>
+        <td>{{ p.bed }}</td>
+        <td>{{ (p.diagnosis or '—')[:25] }}</td>
+        <td>{{ p.doctor or '—' }}</td>
+        <td>{{ p.admission_date }}</td>
+        <td><span class="badge {% if p.status=='Admitted' %}badge-admitted{% else %}badge-discharged{% endif %}">{{ p.status }}</span></td>
+        <td>
+          <div style="display:flex;gap:5px;">
+            <a href="{{ url_for('ipd_patient_profile', id=p.id) }}" class="btn btn-primary" style="padding:5px 11px;font-size:.76rem;">👁️ View</a>
+            <a href="{{ url_for('ipd_bill', id=p.id) }}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:5px 11px;font-size:.76rem;">🧾 Bill</a>
+            {% if p.status=='Admitted' %}
+            <a href="{{ url_for('discharge_patient', id=p.id) }}" class="btn" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:5px 11px;font-size:.76rem;">📤</a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <div style="font-size:3rem;">🛏️</div>
+    <p>No patients found.</p>
+    <a href="{{ url_for('ipd_admit') }}" class="btn btn-success" style="margin-top:12px;">➕ Admit First Patient</a>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

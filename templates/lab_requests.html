@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--lab:#06b6d4;--radius:14px;}
+.lab-header{background:linear-gradient(135deg,#083344,#0891b2,#06b6d4);border-radius:var(--radius);padding:20px 26px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;box-shadow:0 8px 24px rgba(6,182,212,.3);}
+.lab-header h2{font-size:1.3rem;font-weight:800;margin:0;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px;}
+.st-card{border-radius:14px;padding:16px 20px;color:#fff;text-align:center;}
+.st-card .v{font-size:1.8rem;font-weight:900;}.st-card .l{font-size:.7rem;font-weight:600;text-transform:uppercase;opacity:.85;margin-top:3px;}
+.sc1{background:linear-gradient(135deg,#06b6d4,#0891b2);}.sc2{background:linear-gradient(135deg,#7c3aed,#4f46e5);}.sc3{background:linear-gradient(135deg,#10b981,#059669);}
+.panel{background:#fff;border-radius:var(--radius);padding:18px 22px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.82rem;font-weight:700;color:var(--lab);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #cffafe;}
+.dr-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:10px;border:2px solid #e2e8f0;margin-bottom:8px;transition:all .2s;}
+.dr-item:hover{border-color:#06b6d4;background:#ecfeff;}
+.dr-name{font-weight:700;font-size:.88rem;}
+.dr-meta{font-size:.74rem;color:#64748b;margin-top:3px;}
+.badge{display:inline-block;padding:3px 9px;border-radius:50px;font-size:.7rem;font-weight:700;}
+.badge-pending{background:#fef3c7;color:#92400e;}.badge-paid{background:#d1fae5;color:#059669;}.badge-unpaid{background:#fee2e2;color:#dc2626;}
+.badge-proc{background:#cffafe;color:#155e75;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#083344,#0891b2);}
+thead th{color:#fff;padding:10px 12px;font-size:.74rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;}
+tbody tr:hover{background:#ecfeff;}
+tbody td{padding:9px 12px;font-size:.82rem;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:none;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-1px);}
+.btn-lab{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;}
+.btn-pharm{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;}
+.btn-cash{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.btn-result{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.empty{text-align:center;padding:30px;color:#64748b;font-size:.84rem;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .dr-item{border-color:rgba(148,163,184,.2);background:rgba(15,23,42,.5);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="lab-header">
+  <div><h2>🔬 Laboratory — Requests</h2><p style="opacity:.8;margin:3px 0 0;font-size:.82rem;">{{ today }} · {{ today_count }} requests today</p></div>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('lab') }}" class="btn btn-lab">📋 Lab Dashboard</a>
+    <button onclick="location.reload()" style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);color:#fff;padding:8px 16px;border-radius:50px;cursor:pointer;font-weight:600;">🔄 Refresh</button>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="st-card sc1"><div class="v">{{ doctor_requests|length }}</div><div class="l">🩺 From Doctor</div></div>
+  <div class="st-card sc2"><div class="v">{{ today_count }}</div><div class="l">📋 Today Total</div></div>
+  <div class="st-card sc3"><div class="v">GHS {{ "%.0f"|format(today_total) }}</div><div class="l">💰 Today Revenue</div></div>
+</div>
+
+<!-- DOCTOR REQUESTS -->
+{% if doctor_requests %}
+<div class="panel">
+  <div class="panel-title">🩺 Requests from Doctor ({{ doctor_requests|length }})</div>
+  {% for dr in doctor_requests %}
+  <div class="dr-item">
+    <div>
+      <div class="dr-name">{{ dr.patient_name }}</div>
+      <div class="dr-meta">Requested by {{ dr.requested_by }} · {{ (dr.requested_at or '')[:16] }}</div>
+      {% if dr.diagnosis %}<div class="dr-meta" style="color:#4f46e5;">Dx: {{ dr.diagnosis }}</div>{% endif %}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+      <span class="badge badge-{{ dr.status|lower }}">{{ dr.status }}</span>
+      <a href="{{ url_for('lab_process_doctor_request', req_id=dr.id) }}" class="btn btn-lab" style="padding:5px 11px;font-size:.76rem;">🔬 Process &amp; Invoice</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- TODAY'S LAB REQUESTS -->
+<div class="panel">
+  <div class="panel-title">📋 Today's Lab Requests ({{ today_count }})</div>
+  {% if today_labs %}
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>Invoice</th><th>Patient</th><th>Patient ID</th><th>Created</th><th>Amount</th><th>Paid</th><th>Results</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for r in today_labs %}
+      <tr>
+        <td><strong>{{ r.invoice_no }}</strong></td>
+        <td>{{ r.patient_name }}</td>
+        <td>{{ r.patient_id or '—' }}</td>
+        <td>{{ (r.created_at or '')[:16] }}</td>
+        <td style="font-weight:700;color:#06b6d4;">GHS {{ "%.2f"|format(r.total_amount or 0) }}</td>
+        <td>{% if r.is_paid %}<span class="badge badge-paid">✅ Paid</span>{% else %}<span class="badge badge-unpaid">⏳ Unpaid</span>{% endif %}</td>
+        <td>{% if r.results_json %}<span class="badge badge-proc">✅ Ready</span>{% else %}<span class="badge badge-pending">Pending</span>{% endif %}</td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <a href="{{ url_for('lab_invoice', req_id=r.id) }}" class="btn btn-lab" style="padding:5px 10px;font-size:.74rem;">🧾 Invoice</a>
+            {% if r.is_paid %}
+            <a href="{{ url_for('lab_results', req_id=r.id) }}" class="btn btn-result" style="padding:5px 10px;font-size:.74rem;">📊 Results</a>
+            {% else %}
+            <a href="{{ url_for('cashier') }}?load_pid={{ r.patient_id }}" class="btn btn-cash" style="padding:5px 10px;font-size:.74rem;">💰 Pay</a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty">No lab requests today yet.</div>
+  {% endif %}
+</div>
+
+<script>setInterval(()=>location.reload(),30000);</script>
+{% endblock %}

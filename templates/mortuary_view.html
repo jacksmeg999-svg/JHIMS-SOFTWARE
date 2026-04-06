@@ -1,15 +1,142 @@
-<h2>Mortuary Details</h2>
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--violet:#7c3aed;--teal:#0d9488;--radius:14px;}
+.mort-view-header{background:linear-gradient(135deg,#1a0a2e,#7c3aed);border-radius:var(--radius);padding:24px 28px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;box-shadow:0 8px 24px rgba(124,58,237,.35);animation:fadeUp .4s ease;}
+.mv-name{font-size:1.4rem;font-weight:800;}
+.mv-ids{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.mv-id{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);padding:4px 12px;border-radius:50px;font-size:.8rem;font-weight:600;}
+.panel{background:#fff;border-radius:var(--radius);padding:22px 26px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:18px;animation:fadeUp .4s ease;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #ede9fe;display:flex;align-items:center;gap:8px;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+.info-item .key{font-size:.72rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.info-item .val{font-size:.95rem;font-weight:700;margin-top:3px;}
+.badge{display:inline-block;padding:4px 12px;border-radius:50px;font-size:.75rem;font-weight:700;}
+.badge-inmort{background:#fce7f3;color:#be185d;}
+.badge-released{background:#d1fae5;color:#059669;}
+.badge-awaiting{background:#fef3c7;color:#b45309;}
+.badge-paid{background:#d1fae5;color:#059669;}
+.badge-unpaid{background:#fee2e2;color:#dc2626;}
+.bill-box{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:2px solid var(--violet);border-radius:14px;padding:20px 24px;}
+.bill-box .total{font-size:2rem;font-weight:900;color:var(--violet);}
+.bill-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(124,58,237,.15);font-size:.88rem;}
+.bill-row:last-child{border-bottom:none;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:50px;border:none;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;}
+.btn-info{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;}
+.action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.action-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;border-radius:14px;text-decoration:none;font-weight:700;font-size:.82rem;transition:all .22s;border:2px solid transparent;text-align:center;gap:6px;}
+.action-btn:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.15);}
+.ab-cashier{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;}
+.ab-discharge{background:linear-gradient(135deg,#d1fae5,#6ee7b7);color:#065f46;}
+.ab-invoice{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9;}
+.ab-edit{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;}
+.ab-delete{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#991b1b;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury .info-item .key{color:#9ca3af;}
+body.theme-luxury .bill-row{border-color:rgba(124,58,237,.2);}
+</style>
+{% endblock %}
+{% block content %}
 
-<p><b>Corpse ID:</b> {{ r.corpse_id }}</p>
-<p><b>Name:</b> {{ r.corpse_name }}</p>
-<p><b>Age:</b> {{ r.age }}</p>
-<p><b>Sex:</b> {{ r.sex }}</p>
+<div class="mort-view-header">
+  <div>
+    <div class="mv-name">⚰️ {{ r.corpse_name }}</div>
+    <div class="mv-ids">
+      <span class="mv-id">🆔 {{ r.corpse_id }}</span>
+      {% if r.patient_id %}<span class="mv-id">🏥 PID: {{ r.patient_id }}</span>{% endif %}
+      <span class="mv-id">📅 {{ r.deposit_date }}</span>
+      {% if r.brought_in_dead %}<span class="mv-id" style="background:#ef4444;">🚑 Brought In Dead</span>{% endif %}
+    </div>
+  </div>
+  <a href="{{ url_for('mortuary') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);">← Back</a>
+</div>
 
-<p><b>Relative:</b> {{ r.relative_name }}</p>
-<p><b>Phone:</b> {{ r.relative_phone }}</p>
-<p><b>Address:</b> {{ r.relative_address }}</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+  <div>
+    <!-- PERSONAL INFO -->
+    <div class="panel">
+      <div class="panel-title">👤 Personal Details</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="key">Full Name</div><div class="val">{{ r.corpse_name }}</div></div>
+        <div class="info-item"><div class="key">Sex / Age</div><div class="val">{{ r.sex or '—' }} / {{ r.age or '—' }}</div></div>
+        <div class="info-item"><div class="key">Cause of Death</div><div class="val">{{ r.cause_of_death or '—' }}</div></div>
+        <div class="info-item"><div class="key">Doctor</div><div class="val">{{ r.doctor_name or '—' }}</div></div>
+        <div class="info-item"><div class="key">Relative</div><div class="val">{{ r.relative_name or '—' }}</div></div>
+        <div class="info-item"><div class="key">Relative Phone</div><div class="val">{{ r.relative_phone or '—' }}</div></div>
+        <div class="info-item"><div class="key">Notes</div><div class="val">{{ r.notes or '—' }}</div></div>
+        <div class="info-item"><div class="key">Status</div><div class="val">
+          {% if r.status=='In-Mortuary' %}<span class="badge badge-inmort">🏠 In Mortuary</span>
+          {% elif r.status=='Released' %}<span class="badge badge-released">✅ Released</span>
+          {% else %}<span class="badge badge-awaiting">⏳ {{ r.status }}</span>{% endif %}
+        </div></div>
+      </div>
+    </div>
 
-<p><b>Total:</b> {{ r.total_amount }}</p>
-<p><b>Status:</b> {{ r.payment_status }}</p>
+    <!-- TIMELINE -->
+    <div class="panel">
+      <div class="panel-title">📅 Timeline</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="key">Deposit Date</div><div class="val">{{ r.deposit_date }}</div></div>
+        <div class="info-item"><div class="key">Release Date</div><div class="val">{{ r.release_date or 'Not released' }}</div></div>
+        <div class="info-item"><div class="key">Days in Storage</div><div class="val">{{ r.days_total or live_days }} days</div></div>
+        <div class="info-item"><div class="key">Embalming Invoice</div><div class="val">{{ r.embalming_invoice or '—' }}</div></div>
+      </div>
+    </div>
+  </div>
 
-<button onclick="window.print()">Print</button>
+  <div>
+    <!-- BILL -->
+    <div class="panel">
+      <div class="panel-title">💰 Bill Summary</div>
+      <div class="bill-box">
+        <div class="bill-row"><span>Embalming Fee</span><span style="font-weight:700;">GHS {{ "%.2f"|format(r.embalming_fee or 0) }}</span></div>
+        <div class="bill-row"><span>Storage ({{ r.days_total or 0 }} days × rate)</span><span style="font-weight:700;">GHS {{ "%.2f"|format((r.total_amount or 0) - (r.embalming_fee or 0) - (r.extra_amount or 0)) }}</span></div>
+        <div class="bill-row"><span>Extra ({{ r.extra_items or 'None' }})</span><span style="font-weight:700;">GHS {{ "%.2f"|format(r.extra_amount or 0) }}</span></div>
+        <div class="bill-row" style="margin-top:8px;"><span style="font-weight:700;">TOTAL</span><div class="total">GHS {{ "%.2f"|format(r.total_amount or 0) }}</div></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:.74rem;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Embalming</div>
+          {% if r.embalming_paid %}<span class="badge badge-paid">✅ Paid</span>
+          {% else %}<span class="badge badge-unpaid">❌ Unpaid — Send to Cashier</span>{% endif %}
+        </div>
+        <div>
+          <div style="font-size:.74rem;color:#64748b;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Full Bill</div>
+          {% if r.is_paid %}<span class="badge badge-paid">✅ Paid</span>
+          {% else %}<span class="badge badge-unpaid">❌ Pending</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="panel">
+      <div class="panel-title">⚡ Actions</div>
+      <div class="action-grid">
+        <a href="{{ url_for('cashier') }}?load_pid={{ r.patient_id or r.corpse_id }}" class="action-btn ab-cashier">
+          <span style="font-size:1.6rem;">💰</span>Send to Cashier
+        </a>
+        {% if r.embalming_paid and r.status != 'Released' %}
+        <a href="{{ url_for('discharge', id=r.id) }}" class="action-btn ab-discharge">
+          <span style="font-size:1.6rem;">📤</span>Discharge
+        </a>
+        {% endif %}
+        <a href="{{ url_for('mortuary_invoice', case_id=r.id) }}" class="action-btn ab-invoice">
+          <span style="font-size:1.6rem;">🧾</span>Invoice
+        </a>
+        <a href="{{ url_for('mortuary_edit', case_id=r.id) }}" class="action-btn ab-edit">
+          <span style="font-size:1.6rem;">✏️</span>Edit
+        </a>
+        <a href="{{ url_for('delete_mortuary', id=r.id) }}" class="action-btn ab-delete" onclick="return confirm('Delete this record?')">
+          <span style="font-size:1.6rem;">🗑️</span>Delete
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

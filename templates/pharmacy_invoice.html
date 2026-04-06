@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--pharm:#7c3aed;--radius:14px;}
+.wrap{max-width:680px;margin:0 auto;}
+.inv-header{background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;margin-bottom:18px;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:14px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--pharm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ede9fe;}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:.86rem;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:#64748b;}.info-row .v{font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:.85rem;}
+thead th{background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;padding:9px 12px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;}
+tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+.total-box{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:2px solid var(--pharm);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.total-box .tv{font-size:1.8rem;font-weight:900;color:var(--pharm);}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-paid{background:#d1fae5;color:#059669;}.badge-pending{background:#fef3c7;color:#92400e;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border-radius:50px;border:none;font-size:.86rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-print{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.btn-back{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);}
+@media print{.no-print{display:none!important;} body{background:#fff;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+<div class="inv-header no-print">
+  <div><h2 style="margin:0;font-size:1.2rem;font-weight:800;">💊 Prescription Invoice — {{ rx.invoice_no }}</h2>
+  <p style="opacity:.8;margin:4px 0 0;font-size:.83rem;">{{ HOSPITAL_NAME }}</p></div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.print()" class="btn btn-print">🖨️ Print</button>
+    <a href="{{ url_for('pharmacy') }}" class="btn btn-back">← Pharmacy</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div><div style="font-size:1.1rem;font-weight:800;">{{ HOSPITAL_NAME }}</div><div style="font-size:.8rem;color:#64748b;">{{ HOSPITAL_ADDRESS }}</div></div>
+    <div style="text-align:right;font-size:.78rem;color:#64748b;"><div style="font-size:.88rem;font-weight:700;color:var(--pharm);">{{ rx.invoice_no }}</div><div>{{ (rx.prescribed_at or '')[:10] }}</div></div>
+  </div>
+  <hr style="border:1px solid #ede9fe;margin:12px 0;" />
+  <div class="panel-title" style="margin-bottom:10px;">Patient Info</div>
+  <div class="info-row"><span class="k">Patient</span><span class="v">{{ rx.patient_name }}</span></div>
+  <div class="info-row"><span class="k">Patient ID</span><span class="v">{{ rx.patient_id or '—' }}</span></div>
+  <div class="info-row"><span class="k">OPD No.</span><span class="v">{{ rx.opd_number or '—' }}</span></div>
+  <div class="info-row"><span class="k">Prescribed By</span><span class="v">{{ rx.prescribed_by }}</span></div>
+  <div class="info-row"><span class="k">Status</span><span class="v">
+    {% if rx.is_dispensed %}<span class="badge badge-paid">✅ Dispensed</span>
+    {% elif rx.is_paid %}<span class="badge badge-paid">💰 Paid</span>
+    {% else %}<span class="badge badge-pending">⏳ Pending Payment</span>{% endif %}
+  </span></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">💊 Prescribed Drugs</div>
+  {% if drugs %}
+  <table>
+    <thead><tr><th>#</th><th>Drug</th><th>Dose/Instructions</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+    <tbody>
+      {% for d in drugs %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ d.get('name','') }}</strong></td>
+        <td style="color:#64748b;font-size:.8rem;">{{ d.get('dose','') or '—' }}</td>
+        <td>{{ d.get('qty',1) }}</td>
+        <td>GHS {{ "%.2f"|format(float(d.get('unit_price',0))) }}</td>
+        <td><strong>GHS {{ "%.2f"|format(float(d.get('total',0))) }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p style="color:#64748b;font-size:.84rem;">No drug details.</p>{% endif %}
+  <div class="total-box">
+    <div><div style="font-size:.74rem;font-weight:700;color:var(--pharm);text-transform:uppercase;">Total Amount</div><div class="tv">GHS {{ "%.2f"|format(rx.total_amount or 0) }}</div></div>
+    <div style="font-size:.78rem;color:#4c1d95;text-align:right;">{{ rx.invoice_no }}<br>{{ POWERED_BY }}</div>
+  </div>
+</div>
+
+{% if not rx.is_paid %}
+<div class="no-print" style="background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:14px 18px;">
+  <strong style="color:#92400e;">⚠️ Payment Required</strong>
+  <div style="font-size:.82rem;color:#92400e;margin-top:4px;">Patient must pay GHS {{ "%.2f"|format(rx.total_amount or 0) }} at Cashier before drugs can be dispensed.</div>
+  <a href="{{ url_for('cashier') }}?load_pid={{ rx.patient_id }}" class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;margin-top:10px;">💰 Send to Cashier</a>
+</div>
+{% endif %}
+</div>
+{% endblock %}

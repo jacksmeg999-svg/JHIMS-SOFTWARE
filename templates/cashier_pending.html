@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--cash:#0d9488;--radius:14px;}
+.header-bar{background:linear-gradient(135deg,#065f46,#0d9488,#06b6d4);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;box-shadow:0 6px 22px rgba(13,148,136,.3);}
+.header-bar h2{font-size:1.3rem;font-weight:800;margin:0;}
+.panel{background:#fff;border-radius:var(--radius);padding:18px 22px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.83rem;font-weight:700;color:var(--cash);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ccfbf1;display:flex;justify-content:space-between;align-items:center;}
+.refresh-badge{font-size:.72rem;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:50px;font-weight:700;}
+table{width:100%;border-collapse:collapse;}
+thead{background:linear-gradient(135deg,#065f46,#0d9488);}
+thead th{color:#fff;padding:10px 12px;font-size:.75rem;font-weight:600;text-transform:uppercase;text-align:left;}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s;}
+tbody tr:hover{background:#f0fdf4;}
+tbody td{padding:10px 12px;font-size:.83rem;}
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;}
+.badge-lab{background:#cffafe;color:#155e75;}.badge-pharmacy{background:#fce7f3;color:#9d174d;}
+.badge-manual{background:#fef3c7;color:#92400e;}.badge-mortuary{background:#f1f5f9;color:#475569;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:none;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-1px);}
+.btn-pay{background:linear-gradient(135deg,#0d9488,#059669);color:#fff;}
+.btn-view{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.countdown{font-size:.75rem;color:#64748b;}
+.empty{text-align:center;padding:40px;color:#64748b;}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="header-bar">
+  <div><h2>📋 Pending Invoices</h2><p style="opacity:.8;margin:3px 0 0;font-size:.82rem;">Auto-refreshes every 5 seconds</p></div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="countdown" id="refresh-countdown">Refreshing in 5s</span>
+    <a href="{{ url_for('cashier') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);">💰 Cashier</a>
+    <a href="{{ url_for('cashier_new_invoice') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);">➕ New Invoice</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">
+    <span>⏳ Unpaid Invoices ({{ invoices|length }})</span>
+    <span class="refresh-badge">🔄 Live</span>
+  </div>
+  {% if invoices %}
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>#</th><th>Invoice No.</th><th>Type</th><th>Patient</th><th>Patient ID</th><th>Amount</th><th>Created</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ inv.invoice_no }}</strong></td>
+        <td>
+          {% set t=inv.invoice_type %}
+          <span class="badge badge-{{ t|lower if t|lower in ['lab','pharmacy','mortuary'] else 'manual' }}">
+            {% if t=='Lab' %}🔬{% elif t=='Pharmacy' %}💊{% elif t=='Mortuary' %}⚰️{% else %}📄{% endif %} {{ t }}
+          </span>
+        </td>
+        <td><strong>{{ inv.patient_name }}</strong></td>
+        <td>{{ inv.patient_id or '—' }}</td>
+        <td style="font-weight:800;color:#0d9488;">GHS {{ "%.2f"|format(inv.total_amount or 0) }}</td>
+        <td>{{ (inv.created_at or '')[:16] }}</td>
+        <td>
+          <div style="display:flex;gap:5px;">
+            <a href="{{ url_for('cashier_invoice_view', inv_no=inv.invoice_no) }}" class="btn btn-view">👁️ View</a>
+            <a href="{{ url_for('cashier_invoice_view', inv_no=inv.invoice_no) }}" class="btn btn-pay">💰 Pay</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <div style="font-size:2.5rem;">✅</div>
+    <p>No pending invoices. All payments are up to date!</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+let countdown = 5;
+const el = document.getElementById('refresh-countdown');
+setInterval(() => {
+  countdown--;
+  if (countdown <= 0) {
+    location.reload();
+  } else {
+    if (el) el.textContent = `Refreshing in ${countdown}s`;
+  }
+}, 1000);
+</script>
+{% endblock %}

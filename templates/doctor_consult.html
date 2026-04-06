@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--doc:#4f46e5;--radius:14px;}
+.patient-bar{background:linear-gradient(135deg,#1e3a8a,#4f46e5);border-radius:var(--radius);padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+.pname{font-size:1.2rem;font-weight:800;}
+.pids{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+.pid-b{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);padding:3px 10px;border-radius:50px;font-size:.76rem;font-weight:600;}
+.vitals-bar{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #10b981;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;gap:20px;flex-wrap:wrap;}
+.vb-item{text-align:center;}
+.vb-val{font-size:1.1rem;font-weight:800;color:#065f46;}
+.vb-lbl{font-size:.68rem;color:#059669;font-weight:600;text-transform:uppercase;}
+.panel{background:#fff;border-radius:var(--radius);padding:20px 24px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:16px;}
+.panel-title{font-size:.82rem;font-weight:700;color:var(--doc);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e0e7ff;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:.73rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{padding:9px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.88rem;outline:none;transition:border .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--doc);}
+textarea{resize:vertical;min-height:70px;}
+.action-tabs{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.at-btn{padding:10px 20px;border-radius:50px;border:2px solid #e2e8f0;background:#fff;font-weight:600;cursor:pointer;font-size:.84rem;color:#64748b;transition:all .2s;}
+.at-btn.active,.at-btn:hover{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent;}
+.action-section{display:none;}.action-section.active{display:block;animation:fadeUp .3s ease;}
+/* Lab test selector */
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;max-height:260px;overflow-y:auto;padding:4px;}
+.lab-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all .2s;font-size:.83rem;}
+.lab-item:hover,.lab-item.selected{border-color:#4f46e5;background:#e0e7ff;}
+.lab-item input[type=checkbox]{accent-color:#4f46e5;}
+/* Drug prescriber */
+.drug-row{display:flex;gap:8px;align-items:center;padding:8px;border:2px solid #e2e8f0;border-radius:10px;margin-bottom:8px;}
+.drug-row input,.drug-row select{padding:7px 10px;font-size:.83rem;}
+.total-bar{background:#e0e7ff;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;margin-top:10px;}
+.total-val{font-size:1.3rem;font-weight:900;color:var(--doc);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:10px 22px;border-radius:50px;border:none;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-save{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;width:100%;padding:13px;font-size:.95rem;}
+.btn-lab{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;width:100%;padding:13px;font-size:.95rem;}
+.btn-rx{background:linear-gradient(135deg,#10b981,#059669);color:#fff;width:100%;padding:13px;font-size:.95rem;}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:50px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.35);text-decoration:none;font-weight:600;font-size:.84rem;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+body.theme-luxury .lab-item{border-color:rgba(148,163,184,.2);color:#e5e7eb;}
+body.theme-luxury .drug-row{border-color:rgba(148,163,184,.2);}
+</style>
+{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+
+<div class="patient-bar">
+  <div>
+    <div class="pname">👨‍⚕️ {{ patient.full_name if patient else 'Patient' }}</div>
+    <div class="pids">
+      <span class="pid-b">🆔 {{ visit.patient_id }}</span>
+      <span class="pid-b">OPD: {{ visit.opd_number }}</span>
+      {% if patient %}<span class="pid-b">{{ patient.sex }}/{{ patient.age }}</span>{% endif %}
+      {% if visit.funding=='NHIS' %}<span class="pid-b" style="background:#10b981;">🛡️ NHIS</span>{% endif %}
+    </div>
+  </div>
+  <a href="{{ url_for('doctor') }}" class="btn-back">← Doctor</a>
+</div>
+
+<!-- VITALS SUMMARY -->
+{% if vitals %}
+<div class="vitals-bar">
+  {% if vitals.temperature %}<div class="vb-item"><div class="vb-val">{{ vitals.temperature }}°C</div><div class="vb-lbl">Temp</div></div>{% endif %}
+  {% if vitals.bp_systolic %}<div class="vb-item"><div class="vb-val">{{ vitals.bp_systolic }}/{{ vitals.bp_diastolic }}</div><div class="vb-lbl">BP</div></div>{% endif %}
+  {% if vitals.pulse %}<div class="vb-item"><div class="vb-val">{{ vitals.pulse }}</div><div class="vb-lbl">Pulse</div></div>{% endif %}
+  {% if vitals.oxygen_sat %}<div class="vb-item"><div class="vb-val">{{ vitals.oxygen_sat }}%</div><div class="vb-lbl">O₂ Sat</div></div>{% endif %}
+  {% if vitals.weight %}<div class="vb-item"><div class="vb-val">{{ vitals.weight }}kg</div><div class="vb-lbl">Weight</div></div>{% endif %}
+  {% if vitals.bmi %}<div class="vb-item"><div class="vb-val">{{ vitals.bmi }}</div><div class="vb-lbl">BMI</div></div>{% endif %}
+  {% if vitals.chief_complaint %}<div class="vb-item" style="text-align:left;flex:1;"><div class="vb-val" style="font-size:.9rem;">{{ vitals.chief_complaint }}</div><div class="vb-lbl">Chief Complaint</div></div>{% endif %}
+</div>
+{% endif %}
+
+<!-- ACTION TABS -->
+<div class="action-tabs">
+  <button class="at-btn active" onclick="showAction('consult',this)">📋 Consultation</button>
+  <button class="at-btn" onclick="showAction('lab',this)">🔬 Request Lab</button>
+  <button class="at-btn" onclick="showAction('rx',this)">💊 Prescribe</button>
+</div>
+
+<!-- ── CONSULTATION FORM ── -->
+<div id="action-consult" class="action-section active">
+<form method="post">
+  <input type="hidden" name="action" value="save" />
+  <div class="panel">
+    <div class="panel-title">📋 Clinical Notes</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Chief Complaint</label>
+        <input type="text" name="chief_complaint" placeholder="Patient's main complaint" />
+      </div>
+      <div class="form-group full">
+        <label>History of Presenting Illness</label>
+        <textarea name="history" placeholder="Duration, onset, associated symptoms…"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Physical Examination</label>
+        <textarea name="examination" placeholder="General appearance, system examination findings…"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Diagnosis / Impression</label>
+        <textarea name="diagnosis" placeholder="Primary and secondary diagnoses…" style="font-weight:700;"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Treatment Plan / Management</label>
+        <textarea name="treatment_plan" placeholder="Management plan, procedures, referrals…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Follow-up Date</label>
+        <input type="date" name="follow_up_date" />
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <input type="text" name="notes" placeholder="Additional notes" />
+      </div>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-save">💾 Save Consultation</button>
+</form>
+</div>
+
+<!-- ── LAB REQUEST ── -->
+<div id="action-lab" class="action-section">
+<form method="post">
+  <input type="hidden" name="action" value="send_lab" />
+  <div class="panel">
+    <div class="panel-title">🔬 Request Lab Tests</div>
+    <div class="form-group full" style="margin-bottom:12px;">
+      <label>Diagnosis / Reason</label>
+      <input type="text" name="diagnosis" placeholder="Reason for lab request" />
+    </div>
+    <div class="lab-grid" id="lab-grid">
+      {% for t in lab_tests %}
+      <div class="lab-item" onclick="toggleLab(this,'{{ t.name }}',{{ t.non_insured_price }},{{ t.insured_price }})">
+        <input type="checkbox" class="lab-cb" data-name="{{ t.name }}" data-non="{{ t.non_insured_price }}" data-ins="{{ t.insured_price }}" />
+        <div><div style="font-weight:600;font-size:.82rem;">{{ t.name }}</div><div style="font-size:.7rem;color:#64748b;">GHS {{ "%.2f"|format(t.non_insured_price) }}</div></div>
+      </div>
+      {% endfor %}
+    </div>
+    <input type="hidden" name="tests_json" id="lab-tests-json" value="[]" />
+    <div style="margin-top:12px;background:#e0e7ff;border-radius:10px;padding:10px 14px;font-size:.84rem;">
+      Selected: <strong id="lab-count">0</strong> tests
+    </div>
+    <div class="form-group full" style="margin-top:12px;">
+      <label>Notes</label>
+      <textarea name="notes" placeholder="Clinical notes for lab…" rows="2"></textarea>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-lab">🔬 Send Lab Request</button>
+</form>
+</div>
+
+<!-- ── PRESCRIBE ── -->
+<div id="action-rx" class="action-section">
+<form method="post" id="rx-form">
+  <input type="hidden" name="action" value="prescribe" />
+  <div class="panel">
+    <div class="panel-title">💊 Prescription</div>
+    <div class="form-group full" style="margin-bottom:12px;">
+      <label>Diagnosis</label>
+      <input type="text" name="diagnosis" placeholder="Diagnosis for this prescription" />
+    </div>
+    <div id="drug-rows">
+      <div class="drug-row">
+        <input type="text" placeholder="Drug name" class="drug-name" style="flex:2;" oninput="updateRxTotal()" />
+        <input type="text" placeholder="Dose/Instructions" style="flex:2;" class="drug-dose" />
+        <input type="number" placeholder="Qty" style="width:70px;" class="drug-qty" oninput="updateRxTotal()" />
+        <input type="number" step="0.01" placeholder="Unit price" style="width:90px;" class="drug-price" oninput="updateRxTotal()" />
+        <button type="button" onclick="this.closest('.drug-row').remove();updateRxTotal();" style="background:#fee2e2;border:none;border-radius:8px;padding:8px;cursor:pointer;color:#dc2626;font-size:1rem;">✕</button>
+      </div>
+    </div>
+    <button type="button" onclick="addDrugRow()" style="background:#e0e7ff;border:2px dashed #4f46e5;border-radius:10px;padding:10px;width:100%;cursor:pointer;color:#4f46e5;font-weight:600;margin-top:8px;">+ Add Drug</button>
+    <input type="hidden" name="drugs_json" id="rx-drugs-json" />
+    <div class="total-bar" style="margin-top:14px;">
+      <span style="font-weight:700;">Total Amount</span>
+      <div class="total-val" id="rx-total">GHS 0.00</div>
+    </div>
+    <div class="form-group full" style="margin-top:12px;">
+      <label>Notes / Instructions</label>
+      <textarea name="notes" placeholder="Special instructions for patient…" rows="2"></textarea>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-rx" onclick="prepRxJson()">💊 Send to Pharmacy</button>
+</form>
+</div>
+
+</div>
+
+<script>
+function showAction(name,btn){
+  document.querySelectorAll('.action-section').forEach(s=>{s.classList.remove('active');});
+  document.getElementById('action-'+name).classList.add('active');
+  document.querySelectorAll('.at-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Lab
+let selectedLabs=[];
+function toggleLab(el,name,non,ins){
+  const cb=el.querySelector('.lab-cb');
+  cb.checked=!cb.checked;
+  el.classList.toggle('selected',cb.checked);
+  if(cb.checked) selectedLabs.push({name,price:non,ins_price:ins});
+  else selectedLabs=selectedLabs.filter(t=>t.name!==name);
+  document.getElementById('lab-tests-json').value=JSON.stringify(selectedLabs);
+  document.getElementById('lab-count').textContent=selectedLabs.length;
+}
+
+// Drugs
+function addDrugRow(){
+  const div=document.createElement('div');
+  div.className='drug-row';
+  div.innerHTML=`<input type="text" placeholder="Drug name" class="drug-name" style="flex:2;" oninput="updateRxTotal()"/>
+    <input type="text" placeholder="Dose/Instructions" style="flex:2;" class="drug-dose"/>
+    <input type="number" placeholder="Qty" style="width:70px;" class="drug-qty" oninput="updateRxTotal()"/>
+    <input type="number" step="0.01" placeholder="Unit price" style="width:90px;" class="drug-price" oninput="updateRxTotal()"/>
+    <button type="button" onclick="this.closest('.drug-row').remove();updateRxTotal();" style="background:#fee2e2;border:none;border-radius:8px;padding:8px;cursor:pointer;color:#dc2626;">✕</button>`;
+  document.getElementById('drug-rows').appendChild(div);
+}
+
+function updateRxTotal(){
+  let total=0;
+  document.querySelectorAll('.drug-row').forEach(row=>{
+    const qty=parseFloat(row.querySelector('.drug-qty')?.value||0);
+    const price=parseFloat(row.querySelector('.drug-price')?.value||0);
+    total+=qty*price;
+  });
+  document.getElementById('rx-total').textContent='GHS '+total.toFixed(2);
+}
+
+function prepRxJson(){
+  const drugs=[];
+  document.querySelectorAll('.drug-row').forEach(row=>{
+    const name=row.querySelector('.drug-name')?.value?.trim();
+    if(!name) return;
+    const dose=row.querySelector('.drug-dose')?.value?.trim()||'';
+    const qty=parseFloat(row.querySelector('.drug-qty')?.value||1);
+    const price=parseFloat(row.querySelector('.drug-price')?.value||0);
+    drugs.push({name,dose,qty,unit_price:price,total:qty*price});
+  });
+  document.getElementById('rx-drugs-json').value=JSON.stringify(drugs);
+}
+</script>
+{% endblock %}

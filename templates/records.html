@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPD Records — {{ HOSPITAL_NAME }}</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --secondary: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --nhis: #7c3aed;
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 50%, var(--secondary) 100%);
+    padding: 18px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(79,70,229,.35);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar h1 { color: #fff; font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .topbar h1 span { font-size: 1.6rem; }
+  .topbar-actions { display: flex; gap: 10px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; padding: 24px 28px 0; }
+  .stat-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 20px 22px; text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    border-top: 4px solid transparent;
+    transition: transform .2s, box-shadow .2s;
+    animation: slideUp .4s ease both;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+  .stat-card.blue  { border-color: var(--primary); }
+  .stat-card.teal  { border-color: var(--secondary); }
+  .stat-card.green { border-color: var(--success); }
+  .stat-card.purple{ border-color: var(--nhis); }
+  .stat-card.amber { border-color: var(--warning); }
+  .stat-card .val  { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+  .stat-card .lbl  { font-size: .78rem; color: var(--muted); margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-card.blue  .val { color: var(--primary); }
+  .stat-card.teal  .val { color: var(--secondary); }
+  .stat-card.green .val { color: var(--success); }
+  .stat-card.purple .val { color: var(--nhis); }
+  .stat-card.amber .val { color: var(--warning); }
+
+  /* ── MAIN CONTENT ── */
+  .content { padding: 24px 28px; }
+  .section-title { font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  /* ── SEARCH BAR ── */
+  .search-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .search-row input {
+    flex: 1; padding: 12px 18px; border: 2px solid var(--border);
+    border-radius: 50px; font-size: .95rem; outline: none;
+    transition: border .2s, box-shadow .2s;
+  }
+  .search-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+
+  /* ── ACTION BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 20px; border-radius: 50px; border: none;
+    font-size: .9rem; font-weight: 600; cursor: pointer;
+    text-decoration: none; transition: all .2s; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary  { background: linear-gradient(135deg,var(--primary),#7c3aed); color:#fff; }
+  .btn-success  { background: linear-gradient(135deg,var(--success),#059669); color:#fff; }
+  .btn-warning  { background: linear-gradient(135deg,var(--warning),#d97706); color:#fff; }
+  .btn-info     { background: linear-gradient(135deg,var(--secondary),#0891b2); color:#fff; }
+  .btn-danger   { background: linear-gradient(135deg,var(--danger),#dc2626); color:#fff; }
+  .btn-purple   { background: linear-gradient(135deg,var(--nhis),#6d28d9); color:#fff; }
+  .btn-outline  { background: transparent; border: 2px solid var(--primary); color: var(--primary); box-shadow: none; }
+  .btn-sm       { padding: 6px 14px; font-size: .82rem; }
+  .btn-lg       { padding: 14px 28px; font-size: 1rem; }
+
+  /* ── BIG ACTION BUTTONS ── */
+  .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-bottom: 28px; }
+  .action-btn {
+    background: var(--card); border-radius: var(--radius);
+    padding: 24px 20px; text-align: center; text-decoration: none;
+    border: 2px solid var(--border); cursor: pointer; display: block;
+    transition: all .25s; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    animation: slideUp .5s ease both;
+  }
+  .action-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,.14); border-color: transparent; }
+  .action-btn .icon { font-size: 2.4rem; margin-bottom: 10px; display: block; }
+  .action-btn .label { font-size: .95rem; font-weight: 700; }
+  .action-btn .sub   { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+  .action-btn.new-patient { border-top: 4px solid var(--success); }
+  .action-btn.new-patient:hover { background: linear-gradient(135deg,#d1fae5,#a7f3d0); }
+  .action-btn.service-card { border-top: 4px solid var(--primary); }
+  .action-btn.service-card:hover { background: linear-gradient(135deg,#e0e7ff,#c7d2fe); }
+  .action-btn.today-list { border-top: 4px solid var(--secondary); }
+  .action-btn.today-list:hover { background: linear-gradient(135deg,#cffafe,#a5f3fc); }
+  .action-btn.reports { border-top: 4px solid var(--warning); }
+  .action-btn.reports:hover { background: linear-gradient(135deg,#fef3c7,#fde68a); }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--card); border-radius: var(--radius); box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: linear-gradient(135deg,var(--primary),#7c3aed); }
+  thead th { color: #fff; padding: 13px 14px; font-size: .82rem; text-align: left; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+  tbody tr:hover { background: #f8faff; }
+  tbody td { padding: 12px 14px; font-size: .88rem; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: .74rem; font-weight: 700;
+  }
+  .badge-nhis    { background: #ede9fe; color: #7c3aed; }
+  .badge-nonins  { background: #fee2e2; color: #dc2626; }
+  .badge-active  { background: #d1fae5; color: #059669; }
+  .badge-inactive{ background: #f1f5f9; color: #64748b; }
+
+  /* ── FLASH MESSAGES ── */
+  .alerts { padding: 0 28px; margin-top: 16px; }
+  .alert { padding: 13px 18px; border-radius: 10px; margin-bottom: 10px; font-weight: 500; display: flex; align-items: center; gap: 10px; animation: slideDown .3s ease; }
+  .alert-success { background: #d1fae5; color: #065f46; border-left: 4px solid var(--success); }
+  .alert-danger  { background: #fee2e2; color: #991b1b; border-left: 4px solid var(--danger); }
+  .alert-warning { background: #fef3c7; color: #92400e; border-left: 4px solid var(--warning); }
+  .alert-info    { background: #cffafe; color: #155e75; border-left: 4px solid var(--secondary); }
+
+  /* ── QUICK LOOKUP FORM ── */
+  .quick-lookup { background: var(--card); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,.07); border-left: 5px solid var(--primary); }
+  .quick-lookup h3 { font-size: .95rem; font-weight: 700; margin-bottom: 12px; color: var(--primary); }
+  .quick-lookup form { display: flex; gap: 10px; flex-wrap: wrap; }
+  .quick-lookup input { flex: 1; min-width: 200px; padding: 10px 16px; border: 2px solid var(--border); border-radius: 50px; font-size: .9rem; outline: none; }
+  .quick-lookup input:focus { border-color: var(--primary); }
+
+  @keyframes slideUp   { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+  @keyframes pulse     { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 3.5rem; }
+  .empty-state p { margin-top: 10px; font-size: .95rem; }
+
+  .tag-new { animation: pulse 1.8s infinite; }
+
+  @media(max-width:700px) {
+    .topbar { flex-direction: column; gap: 12px; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .action-grid { grid-template-columns: repeat(2,1fr); }
+    table { font-size: .78rem; }
+    thead th:nth-child(n+5), tbody td:nth-child(n+5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <h1><span>🏥</span> OPD Records Office &mdash; {{ HOSPITAL_NAME }}</h1>
+  <div class="topbar-actions">
+    <a href="{{ url_for('records_register') }}" class="btn btn-success btn-lg tag-new">➕ New Patient</a>
+    <a href="{{ url_for('records_today') }}" class="btn btn-info">📋 Today's List</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline" style="color:#fff;border-color:#fff;">🏠 Home</a>
+  </div>
+</div>
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="alerts">
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }}">
+      {% if cat=='success' %}✅{% elif cat=='danger' %}❌{% elif cat=='warning' %}⚠️{% else %}ℹ️{% endif %}
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<!-- STATS ROW -->
+<div class="stats-row">
+  <div class="stat-card blue" style="animation-delay:.05s">
+    <div class="val">{{ today_visits }}</div>
+    <div class="lbl">📅 Today's Visits</div>
+  </div>
+  <div class="stat-card green" style="animation-delay:.1s">
+    <div class="val">{{ today_new }}</div>
+    <div class="lbl">🆕 New Registrations</div>
+  </div>
+  <div class="stat-card purple" style="animation-delay:.15s">
+    <div class="val">{{ today_nhis }}</div>
+    <div class="lbl">🛡️ NHIS Today</div>
+  </div>
+  <div class="stat-card amber" style="animation-delay:.2s">
+    <div class="val">{{ today_noninsured }}</div>
+    <div class="lbl">💵 Non-Insured Today</div>
+  </div>
+  <div class="stat-card teal" style="animation-delay:.25s">
+    <div class="val">GHS {{ "%.2f"|format(settings.consultation_fee_non_insured) }}</div>
+    <div class="lbl">💰 Consultation Fee</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <!-- QUICK ACTION BUTTONS -->
+  <div class="section-title">⚡ Quick Actions</div>
+  <div class="action-grid">
+    <a href="{{ url_for('records_register') }}" class="action-btn new-patient">
+      <span class="icon">🧑‍⚕️</span>
+      <div class="label">Register New Patient</div>
+      <div class="sub">Generate OPD number &amp; Patient ID</div>
+    </a>
+    <a href="#service-lookup" class="action-btn service-card">
+      <span class="icon">🪪</span>
+      <div class="label">Service Existing Card</div>
+      <div class="sub">Returning patient re-visit</div>
+    </a>
+    <a href="{{ url_for('records_today') }}" class="action-btn today-list">
+      <span class="icon">📋</span>
+      <div class="label">Today's OPD List</div>
+      <div class="sub">View all today's visits</div>
+    </a>
+    <a href="{{ url_for('reports_home') }}" class="action-btn reports">
+      <span class="icon">📊</span>
+      <div class="label">Reports</div>
+      <div class="sub">Attendance &amp; statistics</div>
+    </a>
+  </div>
+
+  <!-- QUICK SERVICE CARD LOOKUP -->
+  <div class="quick-lookup" id="service-lookup">
+    <h3>🪪 Service Existing Patient Card</h3>
+    <form action="#" method="get" onsubmit="serviceCard(event)">
+      <input type="text" id="service-input" placeholder="Enter OPD Number or Patient ID (e.g. OPD/000001 or JMH000001)" />
+      <button type="submit" class="btn btn-primary">Service Card</button>
+    </form>
+  </div>
+
+  <!-- PATIENT SEARCH -->
+  <div class="section-title">🔍 Patient Search</div>
+  <div class="search-row">
+    <form method="get" action="{{ url_for('records') }}" style="display:flex;gap:10px;width:100%;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search by name, OPD number, Patient ID, phone or NHIS…" />
+      <button type="submit" class="btn btn-primary">Search</button>
+      {% if q %}<a href="{{ url_for('records') }}" class="btn btn-outline">Clear</a>{% endif %}
+    </form>
+  </div>
+
+  <!-- PATIENTS TABLE -->
+  {% if patients %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>OPD No.</th>
+          <th>Patient ID</th>
+          <th>Full Name</th>
+          <th>Sex / Age</th>
+          <th>Funding</th>
+          <th>Phone</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ p.opd_number }}</strong></td>
+          <td><code>{{ p.patient_id }}</code></td>
+          <td><strong>{{ p.full_name }}</strong></td>
+          <td>{{ p.sex }} / {{ p.age or '—' }}</td>
+          <td>
+            {% if p.funding == 'NHIS' %}
+            <span class="badge badge-nhis">🛡️ NHIS</span>
+            {% else %}
+            <span class="badge badge-nonins">💵 Non-Insured</span>
+            {% endif %}
+          </td>
+          <td>{{ p.phone or '—' }}</td>
+          <td>{{ (p.registered_at or '')[:10] }}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="{{ url_for('records_service_card', opd_number=p.opd_number) }}" class="btn btn-primary btn-sm">🪪 Service</a>
+            <a href="{{ url_for('records_patient_history', patient_id=p.patient_id) }}" class="btn btn-info btn-sm">📁 History</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">🗂️</div>
+    <p>{% if q %}No patients found for "<strong>{{ q }}</strong>".{% else %}No patients registered yet. Start by registering a new patient.{% endif %}</p>
+    <a href="{{ url_for('records_register') }}" class="btn btn-success" style="margin-top:16px;">➕ Register First Patient</a>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function serviceCard(e) {
+  e.preventDefault();
+  const val = document.getElementById('service-input').value.trim();
+  if (!val) { alert('Please enter an OPD Number or Patient ID.'); return; }
+  window.location.href = '/records/service/' + encodeURIComponent(val);
+}
+</script>
+</body>
+</html>

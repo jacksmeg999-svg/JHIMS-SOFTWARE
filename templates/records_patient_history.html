@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Patient History — {{ patient.full_name }}</title>
+<style>
+  :root{--primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--nhis:#7c3aed;--secondary:#06b6d4;--bg:#f0f4ff;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(135deg,#1e293b,#334155);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+  .topbar h1{color:#fff;font-size:1.2rem;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .btn:hover{transform:translateY(-2px);}
+  .btn-back{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.4);}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;}
+  .wrap{max-width:960px;margin:24px auto;padding:0 20px 50px;}
+  .card{background:var(--card);border-radius:var(--radius);padding:26px 30px;box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:20px;animation:slideUp .4s ease;}
+  .card-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e0e7ff;display:flex;align-items:center;gap:8px;}
+  .profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  .profile-item .key{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+  .profile-item .val{font-size:.95rem;font-weight:700;margin-top:3px;}
+  .badge{display:inline-block;padding:4px 12px;border-radius:50px;font-size:.75rem;font-weight:700;}
+  .badge-nhis{background:#ede9fe;color:#7c3aed;}
+  .badge-nonins{background:#fee2e2;color:#dc2626;}
+  table{width:100%;border-collapse:collapse;}
+  thead{background:linear-gradient(135deg,var(--primary),#7c3aed);}
+  thead th{color:#fff;padding:11px 12px;font-size:.78rem;text-align:left;font-weight:600;text-transform:uppercase;}
+  tbody tr{border-bottom:1px solid var(--border);}
+  tbody tr:hover{background:#f8faff;}
+  tbody td{padding:11px 12px;font-size:.85rem;}
+  .empty-section{color:var(--muted);font-size:.88rem;padding:16px;text-align:center;background:#f8faff;border-radius:8px;}
+  .section-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab{padding:9px 20px;border-radius:50px;border:2px solid var(--border);font-size:.85rem;font-weight:600;cursor:pointer;background:var(--card);color:var(--muted);transition:all .2s;}
+  .tab.active,.tab:hover{border-color:var(--primary);color:var(--primary);background:#e0e7ff;}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;animation:slideUp .3s ease;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>📁 Patient History — {{ patient.full_name }}</h1>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('records_service_card', opd_number=patient.opd_number) }}" class="btn btn-primary">🪪 Service Card</a>
+    <a href="{{ url_for('records') }}" class="btn btn-back">← Records</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- PROFILE CARD -->
+  <div class="card">
+    <div class="card-title">👤 Patient Profile</div>
+    <div class="profile-grid">
+      <div class="profile-item"><div class="key">Full Name</div><div class="val">{{ patient.full_name }}</div></div>
+      <div class="profile-item"><div class="key">OPD Number</div><div class="val">{{ patient.opd_number }}</div></div>
+      <div class="profile-item"><div class="key">Patient ID</div><div class="val">{{ patient.patient_id }}</div></div>
+      <div class="profile-item"><div class="key">Sex / Age</div><div class="val">{{ patient.sex }} / {{ patient.age or '—' }}</div></div>
+      <div class="profile-item"><div class="key">Date of Birth</div><div class="val">{{ patient.date_of_birth or '—' }}</div></div>
+      <div class="profile-item"><div class="key">Phone</div><div class="val">{{ patient.phone or '—' }}</div></div>
+      <div class="profile-item"><div class="key">Address</div><div class="val">{{ patient.address or '—' }}</div></div>
+      <div class="profile-item"><div class="key">Next of Kin</div><div class="val">{{ patient.next_of_kin or '—' }} {% if patient.next_of_kin_phone %}<small>({{ patient.next_of_kin_phone }})</small>{% endif %}</div></div>
+      <div class="profile-item"><div class="key">Funding</div><div class="val">
+        {% if patient.funding=='NHIS' %}<span class="badge badge-nhis">🛡️ NHIS</span>{% else %}<span class="badge badge-nonins">💵 Non-Insured</span>{% endif %}
+      </div></div>
+      {% if patient.nhis_number %}<div class="profile-item"><div class="key">NHIS No.</div><div class="val">{{ patient.nhis_number }}</div></div>{% endif %}
+      {% if patient.ccc_code %}<div class="profile-item"><div class="key">CCC Code</div><div class="val" style="color:var(--nhis);font-weight:800;">{{ patient.ccc_code }}</div></div>{% endif %}
+      <div class="profile-item"><div class="key">Registered</div><div class="val">{{ (patient.registered_at or '')[:10] }}</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="section-tabs">
+    <div class="tab active" onclick="showTab('visits',this)">🏥 OPD Visits ({{ visits|length }})</div>
+    <div class="tab" onclick="showTab('receipts',this)">🧾 Receipts ({{ receipts|length }})</div>
+    <div class="tab" onclick="showTab('labs',this)">🔬 Lab Requests ({{ labs|length }})</div>
+  </div>
+
+  <!-- VISITS -->
+  <div id="tab-visits" class="tab-content active">
+    <div class="card">
+      <div class="card-title">🏥 Visit History</div>
+      {% if visits %}
+      <table>
+        <thead><tr><th>#</th><th>Date</th><th>Type</th><th>Funding</th><th>Fee</th><th>Paid?</th><th>Location</th><th></th></tr></thead>
+        <tbody>
+          {% for v in visits %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ v.visit_date }}</td>
+            <td>{{ v.visit_type }}</td>
+            <td>{% if v.funding=='NHIS' %}<span class="badge badge-nhis">NHIS</span>{% else %}<span class="badge badge-nonins">Non-Ins.</span>{% endif %}</td>
+            <td>GHS {{ "%.2f"|format(v.consultation_fee) }}</td>
+            <td>{% if v.funding=='NHIS' %}—{% elif v.consultation_paid %}✅{% else %}⏳{% endif %}</td>
+            <td>{{ v.current_location }}</td>
+            <td><a href="{{ url_for('records_visit_detail', visit_id=v.id) }}" class="btn btn-primary" style="padding:5px 12px;font-size:.78rem;">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="empty-section">No visits recorded yet.</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- RECEIPTS -->
+  <div id="tab-receipts" class="tab-content">
+    <div class="card">
+      <div class="card-title">🧾 Payment Receipts</div>
+      {% if receipts %}
+      <table>
+        <thead><tr><th>#</th><th>Date</th><th>Receipt No.</th><th>Service</th><th>Amount</th><th>Method</th></tr></thead>
+        <tbody>
+          {% for r in receipts %}
+          <tr>
+            <td>{{ loop.index }}</td><td>{{ r.date }}</td>
+            <td><a href="{{ url_for('receipt_view', rec_id=r.id) }}" style="color:var(--primary);font-weight:700;">{{ r.receipt_number }}</a></td>
+            <td>{{ r.service_received }}</td>
+            <td><strong>GHS {{ "%.2f"|format(r.amount_paid) }}</strong></td>
+            <td>{{ r.payment_method or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="empty-section">No receipts found.</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- LAB -->
+  <div id="tab-labs" class="tab-content">
+    <div class="card">
+      <div class="card-title">🔬 Lab Requests</div>
+      {% if labs %}
+      <table>
+        <thead><tr><th>#</th><th>Date</th><th>Invoice</th><th>Amount</th><th>Paid?</th><th>Results?</th></tr></thead>
+        <tbody>
+          {% for l in labs %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ (l.created_at or '')[:10] }}</td>
+            <td><a href="{{ url_for('lab_invoice', req_id=l.id) }}" style="color:var(--primary);font-weight:700;">{{ l.invoice_no }}</a></td>
+            <td>GHS {{ "%.2f"|format(l.total_amount) }}</td>
+            <td>{% if l.is_paid %}✅ Paid{% else %}⏳ Unpaid{% endif %}</td>
+            <td>{% if l.results_json %}✅ Ready{% else %}⏳ Pending{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="empty-section">No lab requests found.</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

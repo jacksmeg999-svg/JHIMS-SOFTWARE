@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--blue:#3b82f6;--radius:14px;}
+.bill-header{background:linear-gradient(135deg,#1e3a8a,#3b82f6);border-radius:var(--radius);padding:22px 28px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.panel{background:#fff;border-radius:var(--radius);padding:22px 26px;box-shadow:0 4px 14px rgba(0,0,0,.08);max-width:700px;margin:0 auto 18px;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #dbeafe;}
+.bill-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:.88rem;}
+.bill-row:last-child{border-bottom:none;}
+.total-box{background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2px solid var(--blue);border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+.total-box .tv{font-size:1.8rem;font-weight:900;color:var(--blue);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:10px 20px;border-radius:50px;border:none;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+@media print{.no-print{display:none!important;} body{background:#fff;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="bill-header" style="max-width:700px;margin:0 auto 20px;">
+  <div>
+    <h2 style="margin:0;font-size:1.3rem;font-weight:800;">🧾 IPD Bill — {{ patient.patient_name }}</h2>
+    <p style="opacity:.8;margin:4px 0 0;font-size:.85rem;">{{ HOSPITAL_NAME }} &nbsp;|&nbsp; {{ HOSPITAL_ADDRESS }}</p>
+  </div>
+  <div class="no-print" style="display:flex;gap:8px;">
+    <button onclick="window.print()" class="btn btn-primary">🖨️ Print</button>
+    <a href="{{ url_for('cashier') }}?load_pid={{ patient.patient_id }}" class="btn btn-warning">💰 Send to Cashier</a>
+    <a href="{{ url_for('ipd_patient_profile', id=patient.id) }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);">← Back</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">👤 Patient Info</div>
+  <div class="bill-row"><span>Name</span><strong>{{ patient.patient_name }}</strong></div>
+  <div class="bill-row"><span>Patient ID</span><strong>{{ patient.patient_id or '—' }}</strong></div>
+  <div class="bill-row"><span>Ward / Bed</span><strong>{{ patient.ward }} / Bed {{ patient.bed }}</strong></div>
+  <div class="bill-row"><span>Admission Date</span><strong>{{ patient.admission_date }}</strong></div>
+  <div class="bill-row"><span>Doctor</span><strong>{{ patient.doctor or '—' }}</strong></div>
+  <div class="bill-row"><span>Diagnosis</span><strong>{{ patient.diagnosis or '—' }}</strong></div>
+  <div class="bill-row"><span>Funding</span><strong>{{ patient.funding or '—' }}</strong></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">💰 Itemised Charges</div>
+  {% for ch in charges %}
+  <div class="bill-row">
+    <span>{{ ch.description }}</span>
+    <span style="color:#64748b;font-size:.78rem;">{{ ch.charge_date }}</span>
+    <strong>GHS {{ "%.2f"|format(ch.amount) }}</strong>
+  </div>
+  {% endfor %}
+  <div class="total-box">
+    <div>
+      <div style="font-size:.75rem;color:#1d4ed8;font-weight:700;text-transform:uppercase;">Total Amount Due</div>
+      <div class="tv">GHS {{ "%.2f"|format(total) }}</div>
+    </div>
+    <div style="font-size:.78rem;color:#1d4ed8;text-align:right;">
+      Printed: {{ now().strftime('%d/%m/%Y %H:%M') }}<br>
+      {{ POWERED_BY }}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Today's OPD List</title>
+<style>
+  :root{--primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--nhis:#7c3aed;--secondary:#06b6d4;--bg:#f0f4ff;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:14px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(135deg,var(--secondary),var(--primary));padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(6,182,212,.3);}
+  .topbar h1{color:#fff;font-size:1.3rem;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:50px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .btn:hover{transform:translateY(-2px);}
+  .btn-back{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.5);}
+  .content{max-width:1100px;margin:24px auto;padding:0 20px 40px;}
+  .table-wrap{background:var(--card);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.08);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead{background:linear-gradient(135deg,var(--secondary),var(--primary));}
+  thead th{color:#fff;padding:13px 14px;font-size:.8rem;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+  tbody tr:hover{background:#f8faff;}
+  tbody td{padding:12px 14px;font-size:.87rem;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.73rem;font-weight:700;}
+  .badge-nhis{background:#ede9fe;color:#7c3aed;}
+  .badge-nonins{background:#fee2e2;color:#dc2626;}
+  .badge-paid{background:#d1fae5;color:#059669;}
+  .badge-pending{background:#fef3c7;color:#b45309;}
+  .loc-badge{padding:4px 12px;border-radius:50px;font-size:.75rem;font-weight:700;}
+  .loc-records{background:#e0e7ff;color:var(--primary);}
+  .loc-cashier{background:#fef3c7;color:#b45309;}
+  .loc-triage{background:#d1fae5;color:#059669;}
+  .loc-doctor{background:#ede9fe;color:#7c3aed;}
+  .loc-lab{background:#cffafe;color:#155e75;}
+  .loc-pharmacy{background:#fce7f3;color:#9d174d;}
+  .summary-row{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+  .sum-card{background:var(--card);border-radius:12px;padding:16px 20px;flex:1;min-width:130px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07);}
+  .sum-card .v{font-size:1.8rem;font-weight:800;}
+  .sum-card .l{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:4px;}
+  .sum-card.blue .v{color:var(--primary);}
+  .sum-card.purple .v{color:var(--nhis);}
+  .sum-card.red .v{color:var(--danger);}
+  .sum-card.green .v{color:var(--success);}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+  .empty-state .icon{font-size:3rem;}
+  @media(max-width:700px){thead th:nth-child(n+6),tbody td:nth-child(n+6){display:none;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>📋 Today's OPD List — {{ today }}</h1>
+  <div style="display:flex;gap:8px;">
+    <a href="{{ url_for('records_register') }}" class="btn" style="background:linear-gradient(135deg,var(--success),#059669);color:#fff;">➕ New Patient</a>
+    <a href="{{ url_for('records') }}" class="btn btn-back">← Records</a>
+  </div>
+</div>
+
+<div class="content">
+  {% set total = visits|length %}
+  {% set nhis_count = visits|selectattr('funding','equalto','NHIS')|list|length %}
+  {% set nonins_count = total - nhis_count %}
+  {% set paid_count = visits|selectattr('consultation_paid','equalto',1)|list|length %}
+
+  <div class="summary-row">
+    <div class="sum-card blue"><div class="v">{{ total }}</div><div class="l">Total Visits</div></div>
+    <div class="sum-card purple"><div class="v">{{ nhis_count }}</div><div class="l">🛡️ NHIS</div></div>
+    <div class="sum-card red"><div class="v">{{ nonins_count }}</div><div class="l">💵 Non-Insured</div></div>
+    <div class="sum-card green"><div class="v">{{ paid_count }}</div><div class="l">✅ Fees Paid</div></div>
+  </div>
+
+  {% if visits %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>OPD No.</th>
+          <th>Patient Name</th>
+          <th>Sex/Age</th>
+          <th>Funding</th>
+          <th>Visit Type</th>
+          <th>Fee Status</th>
+          <th>📍 Location</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in visits %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ v.opd_number }}</strong></td>
+          <td><strong>{{ v.full_name }}</strong></td>
+          <td>{{ v.sex }} / {{ v.age or '—' }}</td>
+          <td>
+            {% if v.funding=='NHIS' %}<span class="badge badge-nhis">🛡️ NHIS</span>
+            {% else %}<span class="badge badge-nonins">💵 Non-Ins.</span>{% endif %}
+          </td>
+          <td>{{ v.visit_type }}</td>
+          <td>
+            {% if v.funding=='NHIS' %}<span class="badge badge-paid">Free</span>
+            {% elif v.consultation_paid %}<span class="badge badge-paid">✅ Paid</span>
+            {% else %}<span class="badge badge-pending">⏳ Unpaid</span>{% endif %}
+          </td>
+          <td>
+            <span class="loc-badge loc-{{ v.current_location|lower }}">{{ v.current_location }}</span>
+          </td>
+          <td>
+            <a href="{{ url_for('records_visit_detail', visit_id=v.id) }}" class="btn" style="background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;padding:6px 14px;font-size:.8rem;">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📋</div>
+    <p>No visits recorded yet today.</p>
+    <a href="{{ url_for('records_register') }}" class="btn" style="background:linear-gradient(135deg,var(--success),#059669);color:#fff;margin-top:16px;">➕ Register First Patient</a>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

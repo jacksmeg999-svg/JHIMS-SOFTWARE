@@ -1,115 +1,143 @@
 {% extends "base.html" %}
+{% block extra_head %}
+<style>
+:root{--blue:#3b82f6;--radius:14px;}
+.admit-header{background:linear-gradient(135deg,#1e3a8a,#3b82f6,#06b6d4);border-radius:var(--radius);padding:22px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 6px 22px rgba(59,130,246,.3);}
+.admit-header h2{font-size:1.3rem;font-weight:800;margin:0;}
+.panel{background:#fff;border-radius:var(--radius);padding:24px 28px;box-shadow:0 4px 16px rgba(0,0,0,.08);max-width:800px;margin:0 auto;animation:fadeUp .4s ease;}
+.panel-title{font-size:.85rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #dbeafe;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:.74rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:border .2s;width:100%;background:#fff;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+.btn-submit{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;width:100%;padding:14px;border:none;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(59,130,246,.4);}
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:50px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);text-decoration:none;font-weight:600;font-size:.88rem;}
+.lookup-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid var(--blue);border-radius:12px;padding:14px 18px;margin-bottom:16px;}
+.lookup-box .lbl{font-size:.76rem;font-weight:700;color:var(--blue);text-transform:uppercase;margin-bottom:8px;}
+.lookup-row{display:flex;gap:8px;}
+.lookup-row input{flex:1;padding:9px 14px;border:2px solid #bfdbfe;border-radius:10px;font-size:.9rem;outline:none;}
+.lookup-row input:focus{border-color:var(--blue);}
+.lookup-row button{padding:9px 18px;border-radius:50px;border:none;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-weight:600;cursor:pointer;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+body.theme-luxury .panel{background:rgba(15,23,42,.85);color:#e5e7eb;}
+body.theme-luxury input,body.theme-luxury select,body.theme-luxury textarea{background:rgba(15,23,42,.9);border-color:rgba(148,163,184,.35);color:#e5e7eb;}
+body.theme-luxury label{color:#9ca3af;}
+body.theme-luxury .lookup-box{background:rgba(30,58,138,.3);border-color:#3b82f6;}
+</style>
+{% endblock %}
 {% block content %}
 
-<style>
-body {
-    background: linear-gradient(135deg,#1e3c72,#2a5298);
-    animation: bgMove 8s infinite alternate;
-}
-
-@keyframes bgMove {
-    from { background-position: left; }
-    to { background-position: right; }
-}
-
-.container {
-    max-width:900px;
-    margin:auto;
-    margin-top:30px;
-    padding:30px;
-    border-radius:20px;
-    background:rgba(255,255,255,0.95);
-    box-shadow:0 20px 40px rgba(0,0,0,0.3);
-    animation: fadeIn 1s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity:0; transform:translateY(20px); }
-    to { opacity:1; transform:translateY(0); }
-}
-
-h2 {
-    text-align:center;
-    margin-bottom:20px;
-    color:#333;
-}
-
-.grid {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
-}
-
-input, select {
-    padding:12px;
-    border-radius:10px;
-    border:1px solid #ccc;
-    transition:0.3s;
-}
-
-input:focus, select:focus {
-    border-color:#0072ff;
-    box-shadow:0 0 8px rgba(0,114,255,0.5);
-}
-
-.full {
-    grid-column: span 2;
-}
-
-button {
-    margin-top:15px;
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    font-size:16px;
-    color:white;
-    background: linear-gradient(45deg,#00c6ff,#0072ff);
-    transition:0.3s;
-}
-
-button:hover {
-    transform: scale(1.05);
-    background: linear-gradient(45deg,#ff6a00,#ee0979);
-}
-</style>
-
-<div class="container">
-
-<h2>🏥 Admit Patient</h2>
-
-<form method="POST">
-
-<div class="grid">
-
-<input type="text" name="patient_id" placeholder="Patient ID" required>
-
-<input type="text" name="patient_name" placeholder="Patient Name" required>
-
-<input type="text" name="age" placeholder="Age">
-
-<select name="sex">
-<option value="">Select Gender</option>
-<option>Male</option>
-<option>Female</option>
-</select>
-
-<input type="text" name="diagnosis" placeholder="Diagnosis" class="full">
-
-<input type="text" name="doctor" placeholder="Doctor Assigned">
-
-<input type="text" name="ward" placeholder="Ward">
-
-<input type="text" name="bed" placeholder="Bed Number">
-
-<input type="date" name="admission_date" class="full">
-
+<div class="admit-header" style="max-width:800px;margin:0 auto 20px;">
+  <div><h2>➕ Admit Patient</h2><p style="opacity:.8;margin:3px 0 0;font-size:.85rem;">In-Patient Department — {{ HOSPITAL_NAME }}</p></div>
+  <a href="{{ url_for('ipd') }}" class="btn-back">← IPD Dashboard</a>
 </div>
 
-<button type="submit">💾 Admit Patient</button>
+<div class="panel">
 
-</form>
+  <!-- PATIENT LOOKUP -->
+  <div class="lookup-box">
+    <div class="lbl">🔍 Auto-fill from OPD Records</div>
+    <div class="lookup-row">
+      <input type="text" id="lookup-pid" placeholder="Enter Patient ID or OPD Number to auto-fill…" />
+      <button type="button" onclick="lookupOPD()">Load</button>
+    </div>
+    <div id="lookup-result" style="margin-top:8px;font-size:.82rem;color:var(--blue);"></div>
+  </div>
 
+  <form method="post">
+    <div class="panel-title">👤 Patient Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Patient ID</label>
+        <input type="text" name="patient_id" id="f-pid" placeholder="e.g. JMH000001" />
+      </div>
+      <div class="form-group">
+        <label>Full Name <span style="color:#ef4444;">*</span></label>
+        <input type="text" name="patient_name" id="f-name" placeholder="Full name" required />
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="text" name="age" id="f-age" placeholder="e.g. 34 years" />
+      </div>
+      <div class="form-group">
+        <label>Sex</label>
+        <select name="sex" id="f-sex">
+          <option value="">-- Select --</option>
+          <option>Male</option><option>Female</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel-title" style="margin-top:18px;">🏥 Admission Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Diagnosis / Complaint</label>
+        <input type="text" name="diagnosis" placeholder="Chief complaint or diagnosis" />
+      </div>
+      <div class="form-group">
+        <label>Attending Doctor</label>
+        <input type="text" name="doctor" placeholder="Dr. Name" />
+      </div>
+      <div class="form-group">
+        <label>Ward <span style="color:#ef4444;">*</span></label>
+        <select name="ward" required>
+          <option value="">-- Select Ward --</option>
+          {% for w in wards %}
+          <option value="{{ w.ward_name }}">{{ w.ward_name }} ({{ w.total_beds }} beds)</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bed Number</label>
+        <input type="text" name="bed" placeholder="e.g. B-12" />
+      </div>
+      <div class="form-group">
+        <label>Funding</label>
+        <select name="funding">
+          <option>Non-Insured</option>
+          <option>NHIS</option>
+          <option>Private</option>
+          <option>Government</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>NHIS Number</label>
+        <input type="text" name="nhis_number" id="f-nhis" placeholder="If NHIS insured" />
+      </div>
+      <div class="form-group">
+        <label>Admission Date</label>
+        <input type="date" name="admission_date" value="{{ now().strftime('%Y-%m-%d') }}" />
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">🛏️ Admit Patient</button>
+  </form>
 </div>
 
+<script>
+function lookupOPD() {
+  const pid = document.getElementById('lookup-pid').value.trim();
+  if (!pid) { alert('Enter Patient ID or OPD Number'); return; }
+  fetch('/api/patient-name?pid=' + encodeURIComponent(pid))
+    .then(r => r.json())
+    .then(d => {
+      if (d.name) {
+        document.getElementById('f-pid').value = d.patient_id || pid;
+        document.getElementById('f-name').value = d.name;
+        if (d.age)  document.getElementById('f-age').value  = d.age;
+        if (d.sex)  document.getElementById('f-sex').value  = d.sex;
+        if (d.nhis) document.getElementById('f-nhis').value = d.nhis;
+        document.getElementById('lookup-result').textContent = '✅ Patient found: ' + d.name;
+      } else {
+        document.getElementById('lookup-result').textContent = '⚠️ Patient not found in OPD records. Fill manually.';
+      }
+    }).catch(() => {
+      document.getElementById('lookup-result').textContent = 'Could not connect.';
+    });
+}
+</script>
 {% endblock %}
